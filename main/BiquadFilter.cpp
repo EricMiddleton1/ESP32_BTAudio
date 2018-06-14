@@ -44,7 +44,7 @@ int32_t MonoBiquad::convertCoefficient(float coef) {
 }
 
 int16_t MonoBiquad::filter(int16_t x) {
-  int32_t x_scaled = x << FRAC_BITS_SAMPLE;
+  int32_t x_scaled = static_cast<int32_t>(x) << FRAC_BITS_SAMPLE;
 
   //Direct Form 1
   int64_t intermediate = static_cast<int64_t>(m_b0)*x
@@ -102,7 +102,33 @@ void Biquad::LPF::setSampleRate(int sampleRate) {
     a1 = -2.f*cw,
     a2 = 1.f - alpha;
 
+  //From Audio-EQ-Cookbook
   ESP_LOGI("Biquad::LPF", "Coefficients: {%f, %f, %f, %f, %f, %f}",
+    b0, b1, b2, a0, a1, a2);
+
+  setCoefficients(b0, b1, b2, a0, a1, a2);
+}
+
+Biquad::HPF::HPF(float fc, float Q)
+  : m_fc{fc}
+  , m_Q{Q} {
+}
+
+void Biquad::HPF::setSampleRate(int sampleRate) {
+  float w0 = 2.f*PI*m_fc/sampleRate;
+  float sw = std::sin(w0), cw = std::cos(w0);
+  float alpha = sw / (2.f*m_Q);
+
+  //From Audio-EQ-Cookbook
+  float 
+    b0 = (1.f + cw)/2.f,
+    b1 = -(1.f + cw),
+    b2 = (1.f + cw)/2.f,
+    a0 = 1.f + alpha,
+    a1 = -2.f*cw,
+    a2 = 1.f - alpha;
+
+  ESP_LOGI("Biquad::HPF", "Coefficients: {%f, %f, %f, %f, %f, %f}",
     b0, b1, b2, a0, a1, a2);
 
   setCoefficients(b0, b1, b2, a0, a1, a2);

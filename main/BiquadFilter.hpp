@@ -13,7 +13,7 @@ namespace Filter {
     int16_t filter(int16_t x);
 
   private:
-    static const int FRAC_BITS_COEF = 28; //signed 3.28 fixed point
+    static const int FRAC_BITS_COEF = 25; //signed 3.28 fixed point
     static const int FRAC_BITS_SAMPLE = 16; //signed 15.16 fixed point
 
     static int32_t convertCoefficient(float coef);
@@ -37,6 +37,16 @@ namespace Filter {
     class LPF : public BiquadFilter {
     public:
       LPF(float fc, float Q);
+
+      void setSampleRate(int sampleRate) override;
+
+    private:
+      float m_fc, m_Q;
+    };
+
+    class HPF : public BiquadFilter {
+    public:
+      HPF(float fc, float Q);
 
       void setSampleRate(int sampleRate) override;
 
