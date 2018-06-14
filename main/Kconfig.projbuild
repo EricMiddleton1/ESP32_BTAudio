@@ -1,0 +1,22 @@
+menu "A2DP Example Configuration"
+
+config I2S_LRCK_PIN
+    int "I2S LRCK (WS) GPIO"
+    default 22
+    help
+        GPIO number to use for I2S LRCK(WS) Driver.
+
+config I2S_BCK_PIN
+    int "I2S BCK GPIO"
+    default 26
+    help
+        GPIO number to use for I2S BCK Driver.
+
+config I2S_DATA_PIN
+    int "I2S DATA GPIO"
+    default 25
+    help
+        GPIO number to use for I2S Data Driver.
+
+
+endmenu
