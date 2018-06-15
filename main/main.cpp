@@ -55,7 +55,12 @@ void app_main()
 {
   signalChain = std::make_unique<DSP::SignalChain>();
   //signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(4.f, 4.f));
-  signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(1000.f, 0.7071f));
+  signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>
+    (80.f, 0.7f, 6.f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(80.f, 0.7071f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
 
   set_signalChain(signalChain.get());
 

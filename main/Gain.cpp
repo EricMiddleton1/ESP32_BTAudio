@@ -1,5 +1,6 @@
 #include "Gain.hpp"
 
+#include <cmath>
 #include <cstdint>
 #include "utility.hpp"
 
@@ -14,6 +15,8 @@ DSP::Filter::Gain::Gain(float leftGain, float rightGain)
 }
 
 uint32_t DSP::Filter::Gain::convertGain(float gain) {
+  gain = std::pow(10.f, gain/20.f);
+
   return saturate<uint32_t>(gain * (1 << 16));
 }
 
