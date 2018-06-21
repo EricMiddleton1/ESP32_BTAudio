@@ -4,13 +4,13 @@
 
 namespace DSP {
 namespace Filter {
-  class MonoBiquad {
+  class BiquadFilter : public IFilter {
   public:
-    MonoBiquad();
+    BiquadFilter();
 
     void setCoefficients(float b0, float b1, float b2, float a0, float a1, float a2);
 
-    int16_t filter(int16_t x);
+    int16_t processSample(int16_t x) override;
 
   private:
     static const int FRAC_BITS_COEF = 25; //signed 6.25 fixed point
@@ -22,27 +22,7 @@ namespace Filter {
     int32_t m_x1, m_x2, m_y1, m_y2;
   };
 
-  class BiquadFilter : public IFilter {
-  public:
-    void processSamples(uint8_t* data, uint32_t len) override;
-
-  protected:
-    void setCoefficients(float b0, float b1, float b2, float a0, float a1, float a2);
-
-  private:
-    MonoBiquad m_leftBiquad, m_rightBiquad;
-  };
-
   namespace Biquad {
-    class ManualFilter : public BiquadFilter {
-    public:
-      ManualFilter(float b0, float b1, float b2, float a0, float a1, float a2);
-
-      void setSampleRate(int sampleRate) override;
-    private:
-      float m_b0, m_b1, m_b2, m_a0, m_a1, m_a2;
-    };
-
     class LPF : public BiquadFilter {
     public:
       LPF(float fc, float Q);

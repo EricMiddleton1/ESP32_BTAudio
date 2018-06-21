@@ -49,20 +49,34 @@ static void task_info(void* arg);
 
 extern "C" void app_main();
 
-std::unique_ptr<DSP::SignalChain> signalChain;
+std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
 
 void app_main()
 {
-  signalChain = std::make_unique<DSP::SignalChain>();
+  signalChainLeft = std::make_unique<DSP::SignalChain>();
+  signalChainRight = std::make_unique<DSP::SignalChain>();
+  
   //signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(4.f, 4.f));
-  signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
-  signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>
-    (80.f, 0.7f, 6.f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>
+    //(80.f, 0.7f, 6.f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(1500.f, 0.7071f));
+  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(150.f, 0.7071f));
   //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(80.f, 0.7071f));
   //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
   //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
 
-  set_signalChain(signalChain.get());
+  //Low frequencies
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 0.7071f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 2.f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(1000.f, 0.7071f));
+
+  //High frequencies
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>
+    (1000.f, 0.7071f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-10.f));
+
+  set_signalChain(signalChainLeft.get(), signalChainRight.get());
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();

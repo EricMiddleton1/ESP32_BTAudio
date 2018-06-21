@@ -5,8 +5,7 @@
 namespace DSP {
   
 SignalChain::SignalChain()
-  : m_outBuffer(START_BUFFER_SIZE)
-  , m_sampleRate{DEFAULT_SAMPLE_RATE} {
+  : m_sampleRate{DEFAULT_SAMPLE_RATE} {
 }
 
 void SignalChain::addFilter(std::unique_ptr<IFilter>&& filter) {
@@ -22,18 +21,12 @@ void SignalChain::setSampleRate(int sampleRate) {
   }
 }
 
-uint8_t* SignalChain::processSamples(const uint8_t* dataIn, uint32_t length) {
-  if(m_outBuffer.size() < length) {
-    m_outBuffer.resize(length);
+void SignalChain::processSamples(SampleBuffer& samples) {
+  for(uint32_t i = 0; i < samples.size(); ++i) {
+    for(auto& filter : m_filters) {
+      samples[i] = filter->processSample(samples[i]);
+    }
   }
-
-  std::memcpy(m_outBuffer.data(), dataIn, length);
-
-  for(auto& filter : m_filters) {
-    filter->processSamples(m_outBuffer.data(), length);
-  }
-
-  return m_outBuffer.data();
 }
 
 }

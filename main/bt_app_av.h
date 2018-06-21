@@ -19,7 +19,7 @@ namespace DSP {
 
 #define BT_AV_TAG               "BT_AV"
 
-void set_signalChain(DSP::SignalChain* signalChain);
+void set_signalChain(DSP::SignalChain* left, DSP::SignalChain* right);
 
 /**
  * @brief     callback function for A2DP sink

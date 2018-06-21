@@ -11,7 +11,7 @@ extern "C" {
 namespace DSP {
 namespace Filter {
 
-MonoBiquad::MonoBiquad()
+BiquadFilter::BiquadFilter()
   : m_x1{0}
   , m_x2{0}
   , m_y1{0}
@@ -20,10 +20,10 @@ MonoBiquad::MonoBiquad()
   setCoefficients(0.f, 0.f, 0.f, 1.f, 0.f, 0.f);
 }
 
-void MonoBiquad::setCoefficients(float b0, float b1, float b2,
+void BiquadFilter::setCoefficients(float b0, float b1, float b2,
   float a0, float a1, float a2) {
   
-  ESP_LOGI("MonoBiquad", "Coefficients: {%f, %f, %f, %f, %f, %f}",
+  ESP_LOGI("BiquadFilter", "Coefficients: {%f, %f, %f, %f, %f, %f}",
     b0, b1, b2, a0, a1, a2);
 
   m_b0 = convertCoefficient(b0/a0);
@@ -35,15 +35,15 @@ void MonoBiquad::setCoefficients(float b0, float b1, float b2,
   m_x1 = m_x2 = 0;
   m_y1 = m_y2 = 0;
 
-  ESP_LOGI("MonoBiquad", "Coefficients: {%d, %d, %d, %d, %d}",
+  ESP_LOGI("BiquadFilter", "Coefficients: {%d, %d, %d, %d, %d}",
     m_b0, m_b1, m_b2, m_a1, m_a2);
 }
 
-int32_t MonoBiquad::convertCoefficient(float coef) {
+int32_t BiquadFilter::convertCoefficient(float coef) {
   return saturate<int32_t>(coef * (1 << FRAC_BITS_COEF));
 }
 
-int16_t MonoBiquad::filter(int16_t x) {
+int16_t BiquadFilter::processSample(int16_t x) {
   int32_t x_scaled = static_cast<int32_t>(x) << FRAC_BITS_SAMPLE;
 
   //Direct Form 1
@@ -62,43 +62,6 @@ int16_t MonoBiquad::filter(int16_t x) {
 }
 
 
-void BiquadFilter::setCoefficients(float b0, float b1, float b2,
-  float a0, float a1, float a2) {
-
-  m_leftBiquad.setCoefficients(b0, b1, b2, a0, a1, a2);
-  m_rightBiquad.setCoefficients(b0, b1, b2, a0, a1, a2);
-}
-
-void BiquadFilter::processSamples(uint8_t* data, uint32_t len) {
-  for(uint32_t i = 0; i < len; i += 4) {
-    //16-bit samples interleaved right-left
-    int16_t right = *reinterpret_cast<int16_t*>(data + i);
-    int16_t left = *reinterpret_cast<int16_t*>(data + i + 2);
-
-    right = m_rightBiquad.filter(right);
-    left = m_leftBiquad.filter(left);
-
-    *reinterpret_cast<int16_t*>(data + i) = right;
-    *reinterpret_cast<int16_t*>(data + i + 2) = left;
-  }
-}
-
-
-Biquad::ManualFilter::ManualFilter(float b0, float b1, float b2, float a0, float a1,
-  float a2)
-  : m_b0{b0}
-  , m_b1{b1}
-  , m_b2{b2}
-  , m_a0{a0}
-  , m_a1{a1}
-  , m_a2{a2} {
-}
-
-void Biquad::ManualFilter::setSampleRate(int sampleRate) {
-  setCoefficients(m_b0, m_b1, m_b2, m_a0, m_a1, m_a2);
-}
-
-
 Biquad::LPF::LPF(float fc, float Q)
   : m_fc{fc}
   , m_Q{Q} {
@@ -109,6 +72,7 @@ void Biquad::LPF::setSampleRate(int sampleRate) {
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
 
+  //From Audio-EQ-Cookbook
   float 
     b0 = (1.f - cw)/2.f,
     b1 = 1.f - cw,
@@ -116,10 +80,6 @@ void Biquad::LPF::setSampleRate(int sampleRate) {
     a0 = 1.f + alpha,
     a1 = -2.f*cw,
     a2 = 1.f - alpha;
-
-  //From Audio-EQ-Cookbook
-  ESP_LOGI("Biquad::LPF", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
 
   setCoefficients(b0, b1, b2, a0, a1, a2);
 }
@@ -143,9 +103,6 @@ void Biquad::HPF::setSampleRate(int sampleRate) {
     a1 = -2.f*cw,
     a2 = 1.f - alpha;
 
-  ESP_LOGI("Biquad::HPF", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
-
   setCoefficients(b0, b1, b2, a0, a1, a2);
 }
 
@@ -168,9 +125,6 @@ void Biquad::PeakingEQ::setSampleRate(int sampleRate) {
     a0 = 1.f + alpha/m_A,
     a1 = -2.f * cw,
     a2 = 1.f - alpha/m_A;
-
-  ESP_LOGI("Biquad::PeakingEQ", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
 
   setCoefficients(b0, b1, b2, a0, a1, a2);
 }
@@ -197,9 +151,6 @@ void Biquad::LowShelf::setSampleRate(int sampleRate) {
     a1 = -2.f*    ( (m_A-1.f)   +   (m_A+1.f)*cw          ),
     a2 =            (m_A+1.f)   +   (m_A-1.f)*cw - factor  ;
 
-  ESP_LOGI("Biquad::LowShelf", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
-
   setCoefficients(b0, b1, b2, a0, a1, a2);
 }
 
@@ -224,9 +175,6 @@ void Biquad::HighShelf::setSampleRate(int sampleRate) {
     a0 =            (m_A+1.f)   -   (m_A-1.f)*cw + factor  ,
     a1 = 2.f*     ( (m_A-1.f)   -   (m_A+1.f)*cw          ),
     a2 =            (m_A+1.f)   -   (m_A-1.f)*cw - factor  ;
-
-  ESP_LOGI("Biquad::HighShelf", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
 
   setCoefficients(b0, b1, b2, a0, a1, a2);
 }

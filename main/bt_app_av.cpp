@@ -27,8 +27,10 @@ extern "C" {
 }
 
 #include "SignalChain.hpp"
+#include "I2SBuffer.hpp"
 
-static DSP::SignalChain* m_signalChain;
+static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
+static DSP::I2SBuffer m_i2sBuffer;
 
 /* a2dp event handler */
 static void bt_av_hdl_a2d_evt(uint16_t event, void *p_param);
@@ -40,8 +42,11 @@ static esp_a2d_audio_state_t m_audio_state = ESP_A2D_AUDIO_STATE_STOPPED;
 static const char *m_a2d_conn_state_str[] = {"Disconnected", "Connecting", "Connected", "Disconnecting"};
 static const char *m_a2d_audio_state_str[] = {"Suspended", "Stopped", "Started"};
 
-void set_signalChain(DSP::SignalChain* signalChain) {
-  m_signalChain = signalChain;
+void set_signalChain(DSP::SignalChain* signalChainLeft,
+  DSP::SignalChain* signalChainRight) {
+  
+  m_signalChainLeft = signalChainLeft;
+  m_signalChainRight = signalChainRight;
 }
 
 /* callback for A2DP sink */
@@ -74,14 +79,23 @@ void bt_app_a2d_data_cb(const uint8_t *data, uint32_t len)
     for(dataPtr = data; dataPtr < endPtr; dataPtr += sample_buffer_len) {
       */
 
-    uint8_t* processed = m_signalChain->processSamples(data, len);
+    //uint8_t* processed = m_signalChain->processSamples(data, len);
 
+    m_i2sBuffer.set(data, len);
+
+    auto leftSamples = m_i2sBuffer.getSamples(DSP::Channel::Left);
+    auto rightSamples = m_i2sBuffer.getSamples(DSP::Channel::Right);
+    
+    m_signalChainLeft->processSamples(leftSamples);
+    m_signalChainRight->processSamples(rightSamples);
+
+    const uint8_t* processedSamples = m_i2sBuffer.get();
 
     //Write data to i2s DMA TX buffer
     //Data is in format based on i2c configuration setting (I think 16bits/sample, interleaved Right/Left)
     //Function set to not timeout (portMAX_DELAY)
     //Size (len) is in bytes
-    i2s_write_bytes(I2S_NUM_0, (const char *)processed, len, portMAX_DELAY);
+    i2s_write_bytes(I2S_NUM_0, (const char *)processedSamples, len, portMAX_DELAY);
     if (++m_pkt_cnt % 100 == 0) {
         ESP_LOGI(BT_AV_TAG, "Audio packet count %u, packet size %d bytes", m_pkt_cnt, len);
     }
@@ -152,7 +166,8 @@ static void bt_av_hdl_a2d_evt(uint16_t event, void *p_param)
             }
             i2s_set_clk(I2S_NUM_0, sample_rate, I2S_BITS_PER_SAMPLE_16BIT,
               I2S_CHANNEL_STEREO);
-            m_signalChain->setSampleRate(sample_rate);
+            m_signalChainLeft->setSampleRate(sample_rate);
+            m_signalChainRight->setSampleRate(sample_rate);
 
             ESP_LOGI(BT_AV_TAG, "Configure audio player %x-%x-%x-%x",
                      a2d->audio_cfg.mcc.cie.sbc[0],
