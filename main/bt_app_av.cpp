@@ -27,9 +27,11 @@ extern "C" {
 }
 
 #include "SignalChain.hpp"
+#include "Mixer.hpp"
 #include "I2SBuffer.hpp"
 
 static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
+static DSP::StereoMode m_stereoMode{DSP::StereoMode::Stereo};
 static DSP::I2SBuffer m_i2sBuffer;
 
 /* a2dp event handler */
@@ -47,6 +49,10 @@ void set_signalChain(DSP::SignalChain* signalChainLeft,
   
   m_signalChainLeft = signalChainLeft;
   m_signalChainRight = signalChainRight;
+}
+
+void set_stereo_mode(DSP::StereoMode stereoMode) {
+  m_stereoMode = stereoMode;
 }
 
 /* callback for A2DP sink */
@@ -82,6 +88,10 @@ void bt_app_a2d_data_cb(const uint8_t *data, uint32_t len)
     //uint8_t* processed = m_signalChain->processSamples(data, len);
 
     m_i2sBuffer.set(data, len);
+
+    if(m_stereoMode == DSP::StereoMode::Mono) {
+      DSP::Mixer::mix(m_i2sBuffer);
+    }
 
     auto leftSamples = m_i2sBuffer.getSamples(DSP::Channel::Left);
     auto rightSamples = m_i2sBuffer.getSamples(DSP::Channel::Right);

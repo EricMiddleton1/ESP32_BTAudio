@@ -4,7 +4,7 @@
 #
 
 PROJECT_NAME := a2dp_sink
-CXXFLAGS += -std=c++14
+CXXFLAGS += -std=c++14 -O2
 
 include $(IDF_PATH)/make/project.mk
 

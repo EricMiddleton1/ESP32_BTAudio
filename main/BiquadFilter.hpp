@@ -2,6 +2,8 @@
 
 #include "IFilter.hpp"
 
+#include "SampleBuffer.hpp"
+
 namespace DSP {
 namespace Filter {
   class BiquadFilter : public IFilter {
@@ -10,7 +12,7 @@ namespace Filter {
 
     void setCoefficients(float b0, float b1, float b2, float a0, float a1, float a2);
 
-    int16_t processSample(int16_t x) override;
+    void processSamples(SampleBuffer& samples) override;
 
   private:
     static const int FRAC_BITS_COEF = 25; //signed 6.25 fixed point

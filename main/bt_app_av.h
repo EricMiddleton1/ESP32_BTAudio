@@ -13,6 +13,8 @@
 #include "esp_a2dp_api.h"
 #include "esp_avrc_api.h"
 
+#include "types.hpp"
+
 namespace DSP {
   class SignalChain;
 }
@@ -20,6 +22,8 @@ namespace DSP {
 #define BT_AV_TAG               "BT_AV"
 
 void set_signalChain(DSP::SignalChain* left, DSP::SignalChain* right);
+
+void set_stereo_mode(DSP::StereoMode stereoMode);
 
 /**
  * @brief     callback function for A2DP sink

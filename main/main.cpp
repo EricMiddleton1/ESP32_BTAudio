@@ -36,6 +36,7 @@ extern "C" {
 #include "SignalChain.hpp"
 #include "Gain.hpp"
 #include "BiquadFilter.hpp"
+#include "types.hpp"
 
 /* event for handler "bt_av_hdl_stack_up */
 enum {
@@ -55,28 +56,90 @@ void app_main()
 {
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
+
+  float fc = 1000.f;
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 1.f));
+  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>(
+    //120.f, 0.7071f, 3.f));
+  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc, 0.7071f));
   
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(4.f, 4.f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>
-    //(80.f, 0.7f, 6.f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(1500.f, 0.7071f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(150.f, 0.7071f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(80.f, 0.7071f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
-  //signalChain->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(40.f, 1.5f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  //signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
 
-  //Low frequencies
-  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 0.7071f));
-  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 2.f));
-  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(1000.f, 0.7071f));
+  /*
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (160.f, 1.5f, -3.f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (160.f, 1.5f, -3.f));
 
-  //High frequencies
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1250.f, 2.f, -2.f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1250.f, 2.f, -2.f));
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1800.f, 3.f, -4.f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1800.f, 3.f, -4.f));
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (6000.f, 3.f, -1.9f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (6000.f, 3.f, -1.9f));
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (9500.f, 1.f, -6.2f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (9500.f, 1.f, -6.2f));
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (17000.f, 1.f, -6.3f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (17000.f, 1.f, -6.3f));
+
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>
+    (100.f, 0.7071f, -2.5f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>
+    (100.f, 0.7071f, -2.5f));
+  */
+
+/*
+  //2nd Order LP filter
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>
+    (2500.f, 0.7071f));
+  //Additional DSP correction
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (160.f, 1.5f, -3.f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1250.f, 2.f, -2.f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1800.f, 3.f, -4.f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>
+    (100.f, 0.7071f, -2.5f));
+
+  //2nd Order HP filter
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>
-    (1000.f, 0.7071f));
-  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-10.f));
-
+    (2500.f, 0.7071f));
+  //Additional DSP correction
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1250.f, 2.f, -2.f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (1800.f, 3.f, -4.f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (6000.f, 3.f, -1.9f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (9500.f, 1.f, -6.2f));
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (17000.f, 1.f, -6.3f));
+  //Gain correction (from 1R resistor + asymptote of 100hz high shelf)
+  //(0.8 amplitude = -1.93820) + (-2.5) dB
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-4.4382f));
+*/
   set_signalChain(signalChainLeft.get(), signalChainRight.get());
+  
+  set_stereo_mode(DSP::StereoMode::Mono);
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();
@@ -188,9 +251,14 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
 
 static void task_info(void* arg) {
   for(;;) {
-    ESP_LOGI("INFO", "Free Heap: %u bytes",
-      heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    //ESP_LOGI("INFO", "Free Heap: %u bytes",
+      //heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
-    vTaskDelay(1000 / portTICK_RATE_MS);
+    ESP_LOGI("", "Left SignalChain (%uus, %uus), Right SignalChain "
+      "(%uus, %uus), %ub", signalChainLeft->avgProcTime(), signalChainLeft->maxProcTime(),
+      signalChainRight->avgProcTime(), signalChainRight->maxProcTime(),
+      signalChainLeft->avgBufferSize());
+
+    vTaskDelay(100 / portTICK_RATE_MS);
   }
 }

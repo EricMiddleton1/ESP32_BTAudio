@@ -4,10 +4,6 @@
 
 #include "utility.hpp"
 
-extern "C" {
-#include <esp_log.h>
-}
-
 namespace DSP {
 namespace Filter {
 
@@ -23,9 +19,6 @@ BiquadFilter::BiquadFilter()
 void BiquadFilter::setCoefficients(float b0, float b1, float b2,
   float a0, float a1, float a2) {
   
-  ESP_LOGI("BiquadFilter", "Coefficients: {%f, %f, %f, %f, %f, %f}",
-    b0, b1, b2, a0, a1, a2);
-
   m_b0 = convertCoefficient(b0/a0);
   m_b1 = convertCoefficient(b1/a0);
   m_b2 = convertCoefficient(b2/a0);
@@ -34,31 +27,28 @@ void BiquadFilter::setCoefficients(float b0, float b1, float b2,
 
   m_x1 = m_x2 = 0;
   m_y1 = m_y2 = 0;
-
-  ESP_LOGI("BiquadFilter", "Coefficients: {%d, %d, %d, %d, %d}",
-    m_b0, m_b1, m_b2, m_a1, m_a2);
 }
 
 int32_t BiquadFilter::convertCoefficient(float coef) {
   return saturate<int32_t>(coef * (1 << FRAC_BITS_COEF));
 }
 
-int16_t BiquadFilter::processSample(int16_t x) {
-  int32_t x_scaled = static_cast<int32_t>(x) << FRAC_BITS_SAMPLE;
+void BiquadFilter::processSamples(SampleBuffer& samples) {
+  for(int i = 0; i < samples.size(); ++i) {
+    int32_t x_scaled = static_cast<int32_t>(samples[i]) << FRAC_BITS_SAMPLE;
 
-  //Direct Form 1
-  int64_t intermediate = static_cast<int64_t>(m_b0)*x_scaled
-    + static_cast<int64_t>(m_b1)*m_x1 + static_cast<int64_t>(m_b2)*m_x2
-    - static_cast<int64_t>(m_a1)*m_y1 - static_cast<int64_t>(m_a2)*m_y2;
+    //Direct Form 1
+    int64_t intermediate = static_cast<int64_t>(m_b0)*x_scaled
+      + static_cast<int64_t>(m_b1)*m_x1 + static_cast<int64_t>(m_b2)*m_x2
+      - static_cast<int64_t>(m_a1)*m_y1 - static_cast<int64_t>(m_a2)*m_y2;
 
-  auto y = saturate<int16_t>(intermediate >> (FRAC_BITS_COEF + FRAC_BITS_SAMPLE));
+    samples[i] = saturate<int16_t>(intermediate >> (FRAC_BITS_COEF + FRAC_BITS_SAMPLE));
 
-  m_y2 = m_y1;
-  m_y1 = saturate<int32_t>(intermediate >> FRAC_BITS_COEF);
-  m_x2 = m_x1;
-  m_x1 = x_scaled;
-
-  return y;
+    m_y2 = m_y1;
+    m_y1 = saturate<int32_t>(intermediate >> FRAC_BITS_COEF);
+    m_x2 = m_x1;
+    m_x1 = x_scaled;
+  }
 }
 
 

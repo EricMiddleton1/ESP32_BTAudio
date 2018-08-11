@@ -19,8 +19,10 @@ uint32_t DSP::Filter::Gain::convertGain(float gain) {
 void DSP::Filter::Gain::setSampleRate(int sampleRate) {
 }
 
-int16_t DSP::Filter::Gain::processSample(int16_t sample) {
-  auto scaled = static_cast<int64_t>(sample) * m_gain;
+void DSP::Filter::Gain::processSamples(SampleBuffer& samples) {
+  for(int i = 0; i < samples.size(); ++i) {
+    auto scaled = static_cast<int64_t>(samples[i]) * m_gain;
 
-  return saturate<int16_t>(scaled >> 16);
+    samples[i] = saturate<int16_t>(scaled >> 16);
+  }
 }

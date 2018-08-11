@@ -11,7 +11,7 @@ namespace Filter {
 
     void setSampleRate(int sampleRate) override;
 
-    int16_t processSample(int16_t sample) override;
+    void processSamples(SampleBuffer& samples) override;
   private:
     static uint32_t convertGain(float gain);
 
