@@ -60,13 +60,102 @@ void app_main()
   float fc = 1000.f;
 
   signalChainLeft->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
-  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 1.f));
-  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>(
-    //120.f, 0.7071f, 3.f));
-  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc, 0.7071f));
+
+  ESP_LOGI("INFO", "Adding HPF");
+	signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(60.f, 0.7071f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(60.f, 0.7071f));
+
+  ESP_LOGI("INFO", "Adding LFP");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc,
+		0.7071f));
+  ESP_LOGI("INFO", "Adding Low Shelf");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>(
+		100.f, 0.7071f, 6.f));
+  ESP_LOGI("INFO", "Adding LFP");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc,
+		0.7071f));
+  ESP_LOGI("INFO", "Adding EQ");
+  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    //(98.4f, 2.f, -2.7f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (138.f, 2.f, -5.f));
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (353.f, 1.f, -3.9f));
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (976.f, 1.f, -3.7f));
+
+
+  ESP_LOGI("INFO", "Adding Gain");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-3.f));
+
+  ESP_LOGI("INFO", "Adding HPF");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
+  ESP_LOGI("INFO", "Adding HPF");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
+
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (976.f, 1.f, -3.7f));
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (2076.f, 1.f, -4.8f));
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (3327.f, 1.43f, -8.3f));
+  ESP_LOGI("INFO", "Adding EQ");
+  //signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    //(5255.f, 4.99f, 2.3f));
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (7235.f, 1.04f, -3.6f));
+
+
+/*
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (2800.f, 1.f, -7.f));
   
-  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
-  //signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
+  ESP_LOGI("INFO", "Adding EQ");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (9156.f, 1.93f, -3.1f));
+*/
+
+/*
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Gain>(-9.f));
+  ESP_LOGI("INFO", "Adding HPF");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(60.f, 0.7071f));
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(60.f, 0.7071f));
+
+  ESP_LOGI("INFO", "Adding Low Shelf");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>(
+  	100.f, 0.7071f, 9.f));
+
+  ESP_LOGI("INFO", "Adding LFP");
+  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc, 0.7071f));
+  
+  ESP_LOGI("INFO", "Adding Gain");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-4.f));
+  
+  ESP_LOGI("INFO", "Adding HPF");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
+
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>(
+		1500.f, 0.7071f, 1.5f));
+
+  ESP_LOGI("INFO", "Adding EQ");
+  signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (2797.f, 1.05f, -5.7f));
+  
+  ESP_LOGI("INFO", "Adding EQ");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (563.f, 2.69f, -5.2f));
+  
+  ESP_LOGI("INFO", "Adding EQ");
+	signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
+    (412.f, 5.f, -4.f));
+*/
 
   /*
   signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
