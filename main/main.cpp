@@ -38,6 +38,8 @@ extern "C" {
 #include "BiquadFilter.hpp"
 #include "types.hpp"
 
+#include "WM8731.hpp"
+
 /* event for handler "bt_av_hdl_stack_up */
 enum {
     BT_APP_EVT_STACK_UP = 0,
@@ -52,20 +54,22 @@ extern "C" void app_main();
 
 std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
 
+WM8731 wm8731;
+
 void app_main()
 {
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
 
-  float fc = 1000.f;
+  //float fc = 1000.f;
 
-  signalChainLeft->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
   //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(50.f, 1.f));
   //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LowShelf>(
     //120.f, 0.7071f, 3.f));
   //signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::LPF>(fc, 0.7071f));
   
-  signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
+  //signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
   //signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
 
   /*
@@ -139,7 +143,7 @@ void app_main()
 */
   set_signalChain(signalChainLeft.get(), signalChainRight.get());
   
-  set_stereo_mode(DSP::StereoMode::Mono);
+  set_stereo_mode(DSP::StereoMode::Stereo);
 
     /* Initialize NVS — it is used to store PHY calibration data */
     esp_err_t ret = nvs_flash_init();
@@ -148,6 +152,10 @@ void app_main()
         ret = nvs_flash_init();
     }
     ESP_ERROR_CHECK( ret );
+
+    ESP_LOGI("INFO", "Intializing WM8731");
+    wm8731.start();
+    ESP_LOGI("INFO", "Done Intializing WM8731");
 
     i2s_config_t i2s_config{
       //mode
