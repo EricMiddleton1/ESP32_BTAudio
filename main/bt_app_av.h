@@ -15,6 +15,8 @@
 
 #include "types.hpp"
 
+#include "I2SOutput.hpp"
+
 namespace DSP {
   class SignalChain;
 }
@@ -24,6 +26,8 @@ namespace DSP {
 void set_signalChain(DSP::SignalChain* left, DSP::SignalChain* right);
 
 void set_stereo_mode(DSP::StereoMode stereoMode);
+
+void set_i2s_output(DSP::I2SOutput* i2sOutput);
 
 /**
  * @brief     callback function for A2DP sink

@@ -4,7 +4,7 @@
 #include <memory>
 
 #include "IFilter.hpp"
-#include "SampleBuffer.hpp"
+#include "types.hpp"
 
 namespace DSP {
 

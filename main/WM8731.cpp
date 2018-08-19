@@ -35,23 +35,23 @@ void WM8731::configureDevice() {
     int err = ESP_OK;
 
     /* Left Line In - 0x00
-     * Volume: 0dB (10111)
+     * Volume: -9dB (10001)
      * Mute: off (0)
      * Copy left data to right: true (1)
      *
-     * Value = 0b10xx10111 = 0x117
+     * Value = 0b10xx10001 = 0x111
      */
-    err = writeByte(DEVICE_ADDR, 0x00, 0x117);
+    err = writeByte(DEVICE_ADDR, 0x00, 0x111);
     ESP_LOGI("INFO", "Setting Left Line In register (%d)", err);
 
     /* Left Headphone out - 0x02 (0b0000010)
-     * Volume: 0dB (1111001)
+     * Volume: MUTE (0000000)
      * Zero Cross Detect: enable (1)
      * Copy left data to right: true (1)
      *
-     * Value = 0b111111001 = 0x1F9
+     * Value = 0b110000000 = 0x180
      */
-    err = writeByte(DEVICE_ADDR, 0x02, 0x1F9);
+    err = writeByte(DEVICE_ADDR, 0x02, 0x180);
     ESP_LOGI("INFO", "Setting Left Headphone Out register (%d)", err);
 
     /* Analog Audio Path Control - 0x04 (0000100)
@@ -65,27 +65,29 @@ void WM8731::configureDevice() {
     ESP_LOGI("INFO", "Setting Analog Audio Path Control register (%d)", err);
 
     /* Digital Audio Path Control - 0x05 (0000101)
+     * ADC High Pass Filter: Enable (0)
      * De-emphasis Control: Disable (00)
      * DAC Soft Mute Control: Disable (0)
+     * Store DC offset when HP filter disabled: Store (1)
      *
-     * Value = 0b00000 = 0x00
+     * Value = 0b10000 = 0x10
      */
-    err = writeByte(DEVICE_ADDR, 0x05, 0x00);
+    err = writeByte(DEVICE_ADDR, 0x05, 0x10);
     ESP_LOGI("INFO", "Setting Digital Audio Path Control register (%d)", err);
 
     /* Power Down Control - 0x06 (0b0000110)
-     * Disable power down (enable power) for:
-     *   Line in
-     *   ADC
-     *   DAC
-     *   Line out
-     *   Oscillator
-     *   Clock out
-     *   Device
+     * Line-In: On (0)
+     * Mic input and bias: Off (1)
+     * ADC: On (0)
+     * DAC: On (0)
+     * Line-Out: On (0)
+     * Oscillator: On (0)
+     * CLKOUT: Off (1)
+     * Device Power: On (0)
      *
-     * Value = 0b00000000 = 0x00
+     * Value = 0b01000010 = 0x42
      */
-    err = writeByte(DEVICE_ADDR, 0x06, 0x00);
+    err = writeByte(DEVICE_ADDR, 0x06, 0x42);
     ESP_LOGI("INFO", "Setting Power Down Control register (%d)", err);
 
     /* Digital Audio Interface Format - 0x07 (0b0000111)

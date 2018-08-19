@@ -1,6 +1,6 @@
 #pragma once
 
-#include "SampleBuffer.hpp"
+#include "types.hpp"
 
 namespace DSP {
   class IFilter {

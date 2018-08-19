@@ -42,7 +42,7 @@ void SignalChain::processSamples(SampleBuffer& samples) {
 
   m_avgProcTime = (m_avgProcTime*3 + dt*1)/4;
   m_maxProcTime = std::max(m_maxProcTime, dt);
-  m_avgBufferSize = (m_avgBufferSize*3 + samples.size()*1)/4;
+  m_avgBufferSize = samples.size(); //(m_avgBufferSize*3 + samples.size()*1)/4;
 }
 
 uint32_t SignalChain::avgProcTime() const {

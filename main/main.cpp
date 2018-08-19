@@ -22,7 +22,6 @@ extern "C" {
 
   #include "esp_bt.h"
   #include "bt_app_core.h"
-  #include "bt_app_av.h"
   #include "esp_bt_main.h"
   #include "esp_bt_device.h"
   #include "esp_gap_bt_api.h"
@@ -31,13 +30,17 @@ extern "C" {
   #include "driver/i2s.h"
 }
 
+#include "bt_app_av.h"
+
 #include <memory>
+#include <cstring>
 
 #include "SignalChain.hpp"
 #include "Gain.hpp"
 #include "BiquadFilter.hpp"
 #include "types.hpp"
-
+#include "I2SOutput.hpp"
+#include "I2SInput.hpp"
 #include "WM8731.hpp"
 
 /* event for handler "bt_av_hdl_stack_up */
@@ -50,16 +53,117 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param);
 
 static void task_info(void* arg);
 
+static void task_setup(void* arg);
+
 extern "C" void app_main();
 
 std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
+
+DSP::I2SOutput i2sOutput(I2S_NUM_0, 1024);
+std::unique_ptr<DSP::I2SInput> i2sInput;
+
+DSP::SampleBuffer leftSamples(1024), rightSamples(1024);
 
 WM8731 wm8731;
 
 void app_main()
 {
+  /* Initialize NVS — it is used to store PHY calibration data */
+  esp_err_t ret = nvs_flash_init();
+  if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
+      ESP_ERROR_CHECK(nvs_flash_erase());
+      ret = nvs_flash_init();
+  }
+  ESP_ERROR_CHECK( ret );
+
+  i2s_config_t i2s_config{
+    //mode
+    static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
+    //sample_rate
+    44100,
+    //bits_per_sample
+    I2S_BITS_PER_SAMPLE_16BIT,
+    //channel_format
+    I2S_CHANNEL_FMT_RIGHT_LEFT,
+    //communication_format
+    static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+    //intr_alloc_flags
+    ESP_INTR_FLAG_LEVEL1,
+    //dma_buf_count (previously 6)
+    4,
+    //dma_buf_len (previously 60)
+    //4096 is maximum observed single a2dp data packet length
+    1024,
+    //use_apll
+    0,
+    //fixed_mclk
+    0
+  };
+
+  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+  
+  i2s_pin_config_t pin_config = {
+      //bck_io_num
+      CONFIG_I2S_BCK_PIN,
+      //ws_io_num
+      CONFIG_I2S_LRCK_PIN,
+      //data_out_num
+      CONFIG_I2S_DATA_OUT_PIN,
+      //data_in_num
+      CONFIG_I2S_DATA_IN_PIN,                                                       //Not used
+  };
+
+  i2s_set_pin(I2S_NUM_0, &pin_config);
+
+/*
+  ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
+
+  esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
+  if (esp_bt_controller_init(&bt_cfg) != ESP_OK) {
+      ESP_LOGE(BT_AV_TAG, "%s initialize controller failed\n", __func__);
+      return;
+  }
+
+  if (esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT) != ESP_OK) {
+      ESP_LOGE(BT_AV_TAG, "%s enable controller failed\n", __func__);
+      return;
+  }
+
+  if (esp_bluedroid_init() != ESP_OK) {
+      ESP_LOGE(BT_AV_TAG, "%s initialize bluedroid failed\n", __func__);
+      return;
+  }
+
+  if (esp_bluedroid_enable() != ESP_OK) {
+      ESP_LOGE(BT_AV_TAG, "%s enable bluedroid failed\n", __func__);
+      return;
+  }
+  */
+
+  xTaskCreate(task_setup, "task_setup", 4096, NULL, 5, NULL);
+}
+
+void task_setup(void* arg) {
+  ESP_LOGI("task_setup", "Setup Started");
+
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
+
+  i2sInput = std::make_unique<DSP::I2SInput>(I2S_NUM_0,
+    1024,
+    [](const DSP::SampleBuffer& left, const DSP::SampleBuffer& right) {
+      
+      std::memcpy(leftSamples.data(), left.data(), left.size()*sizeof(left[0]));
+      std::memcpy(rightSamples.data(), right.data(), right.size()*sizeof(right[0]));
+
+      signalChainLeft->processSamples(leftSamples);
+      signalChainRight->processSamples(rightSamples);
+
+      i2sOutput.writeSamples(leftSamples, rightSamples);
+      
+
+      //i2sOutput.writeSamples(left, right);
+    });
 
   //float fc = 1000.f;
 
@@ -72,7 +176,7 @@ void app_main()
   //signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-6.f));
   //signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HPF>(fc, 0.7071f));
 
-  /*
+
   signalChainLeft->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
     (160.f, 1.5f, -3.f));
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::PeakingEQ>
@@ -107,7 +211,6 @@ void app_main()
     (100.f, 0.7071f, -2.5f));
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>
     (100.f, 0.7071f, -2.5f));
-  */
 
 /*
   //2nd Order LP filter
@@ -142,90 +245,29 @@ void app_main()
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-4.4382f));
 */
   set_signalChain(signalChainLeft.get(), signalChainRight.get());
-  
   set_stereo_mode(DSP::StereoMode::Stereo);
+  set_i2s_output(&i2sOutput);
 
-    /* Initialize NVS — it is used to store PHY calibration data */
-    esp_err_t ret = nvs_flash_init();
-    if (ret == ESP_ERR_NVS_NO_FREE_PAGES) {
-        ESP_ERROR_CHECK(nvs_flash_erase());
-        ret = nvs_flash_init();
-    }
-    ESP_ERROR_CHECK( ret );
+  signalChainLeft->setSampleRate(44100);
+  signalChainRight->setSampleRate(44100);
 
-    ESP_LOGI("INFO", "Intializing WM8731");
-    wm8731.start();
-    ESP_LOGI("INFO", "Done Intializing WM8731");
+  ESP_LOGI("INFO", "Intializing WM8731");
+  wm8731.start();
+  ESP_LOGI("INFO", "Done Intializing WM8731");
 
-    i2s_config_t i2s_config{
-      //mode
-      static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX),
-      //sample_rate
-      44100,
-      //bits_per_sample
-      I2S_BITS_PER_SAMPLE_16BIT,
-      //channel_format
-      I2S_CHANNEL_FMT_RIGHT_LEFT,
-      //communication_format
-      static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-      //intr_alloc_flags
-      ESP_INTR_FLAG_LEVEL1,
-      //dma_buf_count (previously 6)
-      4,
-      //dma_buf_len (previously 60)
-      //4096 is maximum observed single a2dp data packet length
-      1024,
-      //use_apll
-      0,
-      //fixed_mclk
-      0
-    };
+  ESP_LOGI("task_setup", "Starting I2S Input");
+  i2sInput->start();
+  ESP_LOGI("task_setup", "Done Starting I2S Input");
 
-    i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
-    
-    i2s_pin_config_t pin_config = {
-        //bck_io_num
-        CONFIG_I2S_BCK_PIN,
-        //ws_io_num
-        CONFIG_I2S_LRCK_PIN,
-        //data_out_num
-        CONFIG_I2S_DATA_PIN,
-        //data_in_num
-        -1                                                       //Not used
-    };
+  /* create application task */
+  //bt_app_task_start_up();
 
-    i2s_set_pin(I2S_NUM_0, &pin_config);
+  /* Bluetooth device name, connection mode and profile set up */
+  //bt_app_work_dispatch(bt_av_hdl_stack_evt, BT_APP_EVT_STACK_UP, NULL, 0, NULL);
 
-    ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
+  xTaskCreate(task_info, "task_info", 4096, NULL, 5, NULL);
 
-    esp_bt_controller_config_t bt_cfg = BT_CONTROLLER_INIT_CONFIG_DEFAULT();
-    if (esp_bt_controller_init(&bt_cfg) != ESP_OK) {
-        ESP_LOGE(BT_AV_TAG, "%s initialize controller failed\n", __func__);
-        return;
-    }
-
-    if (esp_bt_controller_enable(ESP_BT_MODE_CLASSIC_BT) != ESP_OK) {
-        ESP_LOGE(BT_AV_TAG, "%s enable controller failed\n", __func__);
-        return;
-    }
-
-    if (esp_bluedroid_init() != ESP_OK) {
-        ESP_LOGE(BT_AV_TAG, "%s initialize bluedroid failed\n", __func__);
-        return;
-    }
-
-    if (esp_bluedroid_enable() != ESP_OK) {
-        ESP_LOGE(BT_AV_TAG, "%s enable bluedroid failed\n", __func__);
-        return;
-    }
-
-    /* create application task */
-    bt_app_task_start_up();
-
-    /* Bluetooth device name, connection mode and profile set up */
-    bt_app_work_dispatch(bt_av_hdl_stack_evt, BT_APP_EVT_STACK_UP, NULL, 0, NULL);
-
-    xTaskCreate(task_info, "task_info", 4096, NULL, 5, NULL);
+  vTaskDelete(NULL);
 }
 
 
@@ -267,6 +309,6 @@ static void task_info(void* arg) {
       signalChainRight->avgProcTime(), signalChainRight->maxProcTime(),
       signalChainLeft->avgBufferSize());
 
-    vTaskDelay(100 / portTICK_RATE_MS);
+    vTaskDelay(500 / portTICK_RATE_MS);
   }
 }

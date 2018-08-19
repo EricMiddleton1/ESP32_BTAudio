@@ -14,7 +14,6 @@
 extern "C" {
 #include "esp_log.h"
 #include "bt_app_core.h"
-#include "bt_app_av.h"
 #include "esp_bt_main.h"
 #include "esp_bt_device.h"
 #include "esp_gap_bt_api.h"
@@ -26,13 +25,22 @@ extern "C" {
 #include "driver/i2s.h"
 }
 
+#include "bt_app_av.h"
+
 #include "SignalChain.hpp"
-#include "Mixer.hpp"
-#include "I2SBuffer.hpp"
+#include "I2SOutput.hpp"
+
+
+static constexpr int BUFFER_SIZE = 1024;
 
 static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
 static DSP::StereoMode m_stereoMode{DSP::StereoMode::Stereo};
-static DSP::I2SBuffer m_i2sBuffer;
+
+static DSP::I2SOutput *m_i2sOutput;
+
+static DSP::SampleBuffer m_leftSamples(BUFFER_SIZE),
+    m_rightSamples(BUFFER_SIZE);
+static std::vector<uint8_t> m_audioBuffer(BUFFER_SIZE*4);
 
 /* a2dp event handler */
 static void bt_av_hdl_a2d_evt(uint16_t event, void *p_param);
@@ -55,6 +63,10 @@ void set_stereo_mode(DSP::StereoMode stereoMode) {
   m_stereoMode = stereoMode;
 }
 
+void set_i2s_output(DSP::I2SOutput* i2sOutput) {
+    m_i2sOutput = i2sOutput;
+}
+
 /* callback for A2DP sink */
 void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 {
@@ -73,40 +85,23 @@ void bt_app_a2d_cb(esp_a2d_cb_event_t event, esp_a2d_cb_param_t *param)
 
 void bt_app_a2d_data_cb(const uint8_t *data, uint32_t len)
 {
-  /*
-    static uint8_t* sample_buffer = NULL;
-    static const uint32_t sample_buffer_length = 4096;
+    int sampleCount = len / 4;
+    m_leftSamples.resize(sampleCount);
+    m_rightSamples.resize(sampleCount);
 
-    if(sample_buffer == NULL) {
-      sample_buffer = malloc(sample_buffer_length);
+    for(int i = 0; i < sampleCount; ++i) {
+        int offset = 4*i;
+
+        std::memcpy(&m_rightSamples[i], data + offset, 2);
+        std::memcpy(&m_leftSamples[i], data + offset + 2, 2);
     }
-
-    uint8_t *dataPtr, *endPtr = data + len;
-    for(dataPtr = data; dataPtr < endPtr; dataPtr += sample_buffer_len) {
-      */
-
-    //uint8_t* processed = m_signalChain->processSamples(data, len);
-
-    m_i2sBuffer.set(data, len);
-
-    if(m_stereoMode == DSP::StereoMode::Mono) {
-      DSP::Mixer::mix(m_i2sBuffer);
-    }
-
-    auto leftSamples = m_i2sBuffer.getSamples(DSP::Channel::Left);
-    auto rightSamples = m_i2sBuffer.getSamples(DSP::Channel::Right);
     
-    m_signalChainLeft->processSamples(leftSamples);
-    m_signalChainRight->processSamples(rightSamples);
+    m_signalChainLeft->processSamples(m_leftSamples);
+    m_signalChainRight->processSamples(m_rightSamples);
 
-    const uint8_t* processedSamples = m_i2sBuffer.get();
+    m_i2sOutput->writeSamples(m_leftSamples, m_rightSamples);
 
-    //Write data to i2s DMA TX buffer
-    //Data is in format based on i2c configuration setting (I think 16bits/sample, interleaved Right/Left)
-    //Function set to not timeout (portMAX_DELAY)
-    //Size (len) is in bytes
-    i2s_write_bytes(I2S_NUM_0, (const char *)processedSamples, len, portMAX_DELAY);
-    if (++m_pkt_cnt % 100 == 0) {
+    if (++m_pkt_cnt % 500 == 0) {
         ESP_LOGI(BT_AV_TAG, "Audio packet count %u, packet size %d bytes", m_pkt_cnt, len);
     }
 }

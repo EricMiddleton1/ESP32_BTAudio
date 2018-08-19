@@ -12,11 +12,17 @@ config I2S_BCK_PIN
     help
         GPIO number to use for I2S BCK Driver.
 
-config I2S_DATA_PIN
+config I2S_DATA_OUT_PIN
     int "I2S DATA GPIO"
     default 25
     help
-        GPIO number to use for I2S Data Driver.
+        GPIO number to use for I2S Output Data Driver.
+
+config I2S_DATA_IN_PIN
+    int "I2S DATA GPIO"
+    default 27
+    help
+        GPIO number to use for I2S Input Data Driver.
 
 
 endmenu

@@ -2,8 +2,6 @@
 
 #include "IFilter.hpp"
 
-#include "SampleBuffer.hpp"
-
 namespace DSP {
 namespace Filter {
   class BiquadFilter : public IFilter {
