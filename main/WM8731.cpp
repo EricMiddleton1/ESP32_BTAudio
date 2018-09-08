@@ -22,7 +22,7 @@ void WM8731::i2cInit() {
     config.sda_pullup_en = GPIO_PULLUP_DISABLE;
     config.scl_io_num = GPIO_NUM_22; //SCL = GPIO22
     config.scl_pullup_en = GPIO_PULLUP_DISABLE;
-    config.master.clk_speed = 100000; //Standard speed I2C
+    config.master.clk_speed = 50000; //Standard speed I2C
     
     //Configure I2C0
     i2c_param_config(I2C_NUM_0, &config);
@@ -35,13 +35,13 @@ void WM8731::configureDevice() {
     int err = ESP_OK;
 
     /* Left Line In - 0x00
-     * Volume: -9dB (10001)
+     * Volume: 0dB (10111) //-9dB (10001)
      * Mute: off (0)
      * Copy left data to right: true (1)
      *
-     * Value = 0b10xx10001 = 0x111
+     * Value = 0b10xx10111 = 0x117 //0b10xx10001 = 0x111
      */
-    err = writeByte(DEVICE_ADDR, 0x00, 0x111);
+    err = writeByte(DEVICE_ADDR, 0x00, 0x117);
     ESP_LOGI("INFO", "Setting Left Line In register (%d)", err);
 
     /* Left Headphone out - 0x02 (0b0000010)
@@ -65,14 +65,14 @@ void WM8731::configureDevice() {
     ESP_LOGI("INFO", "Setting Analog Audio Path Control register (%d)", err);
 
     /* Digital Audio Path Control - 0x05 (0000101)
-     * ADC High Pass Filter: Enable (0)
+     * ADC High Pass Filter: Enable (1)
      * De-emphasis Control: Disable (00)
      * DAC Soft Mute Control: Disable (0)
      * Store DC offset when HP filter disabled: Store (1)
      *
-     * Value = 0b10000 = 0x10
+     * Value = 0b10001 = 0x11
      */
-    err = writeByte(DEVICE_ADDR, 0x05, 0x10);
+    err = writeByte(DEVICE_ADDR, 0x05, 0x11);
     ESP_LOGI("INFO", "Setting Digital Audio Path Control register (%d)", err);
 
     /* Power Down Control - 0x06 (0b0000110)
@@ -81,13 +81,13 @@ void WM8731::configureDevice() {
      * ADC: On (0)
      * DAC: On (0)
      * Line-Out: On (0)
-     * Oscillator: On (0)
+     * Oscillator: Off (1) //On (0)
      * CLKOUT: Off (1)
      * Device Power: On (0)
      *
-     * Value = 0b01000010 = 0x42
+     * Value = 0b01100010 = 0x62 //0b01000010 = 0x42
      */
-    err = writeByte(DEVICE_ADDR, 0x06, 0x42);
+    err = writeByte(DEVICE_ADDR, 0x06, 0x62);
     ESP_LOGI("INFO", "Setting Power Down Control register (%d)", err);
 
     /* Digital Audio Interface Format - 0x07 (0b0000111)
@@ -104,15 +104,15 @@ void WM8731::configureDevice() {
     ESP_LOGI("INFO", "Setting Digital Audio Interface Format register (%d)", err);
 
     /* Sampling Control - 0x08 (0b0001000)
-     * Mode Select: USB (1)
-     * Base Over-Sampling Rate: 1
+     * Mode Select: Normal (0) //USB (1)
+     * Base Over-Sampling Rate: 0 //1
      * Sample Rate Control: 0b1000
      * Core Clock Divider Select: 0
      * CLKOUT divider select: 0
      *
-     * Value = 0b00100011 = 0x23
+     * Value = 0b00100000 = 0x20 //0b00100011 = 0x23
      */
-    err = writeByte(DEVICE_ADDR, 0x08, 0x23);
+    err = writeByte(DEVICE_ADDR, 0x08, 0x20);
     ESP_LOGI("INFO", "Setting Sampling Control register (%d)", err);
 
     /* Active Control - 0x09 (0b0001001)

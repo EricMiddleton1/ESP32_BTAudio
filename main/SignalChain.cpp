@@ -13,7 +13,8 @@ SignalChain::SignalChain()
   : m_sampleRate{DEFAULT_SAMPLE_RATE}
   , m_avgProcTime{0}
   , m_maxProcTime{0}
-  , m_avgBufferSize{0} {
+  , m_avgBufferSize{0}
+  , m_peakSample{0} {
 }
 
 void SignalChain::addFilter(std::unique_ptr<IFilter>&& filter) {
@@ -32,6 +33,13 @@ void SignalChain::setSampleRate(int sampleRate) {
 
 void SignalChain::processSamples(SampleBuffer& samples) {
   auto startTime = esp_timer_get_time();
+
+  for(const auto sample : samples) {
+    int absSample = sample > 0 ? sample : -sample;
+    if(absSample > m_peakSample) {
+      m_peakSample = absSample;
+    }
+  }
 
   for(auto& filter : m_filters) {
     filter->processSamples(samples);
@@ -55,6 +63,10 @@ uint32_t SignalChain::maxProcTime() const {
 
 uint32_t SignalChain::avgBufferSize() const {
   return m_avgBufferSize;
+}
+
+uint16_t SignalChain::peakSample() const {
+  return m_peakSample;
 }
 
 }

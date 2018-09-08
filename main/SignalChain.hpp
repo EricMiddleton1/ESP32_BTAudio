@@ -21,6 +21,7 @@ namespace DSP {
     uint32_t avgProcTime() const;
     uint32_t maxProcTime() const;
     uint32_t avgBufferSize() const;
+    uint16_t peakSample() const;
   private:
     const int DEFAULT_SAMPLE_RATE = 44100;
 
@@ -30,5 +31,6 @@ namespace DSP {
     uint32_t m_avgProcTime;
     uint32_t m_maxProcTime;
     uint32_t m_avgBufferSize;
+    uint16_t m_peakSample;
   };
 }

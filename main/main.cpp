@@ -43,6 +43,8 @@ extern "C" {
 #include "I2SInput.hpp"
 #include "WM8731.hpp"
 
+#define SAMPLE_RATE	44100
+
 /* event for handler "bt_av_hdl_stack_up */
 enum {
     BT_APP_EVT_STACK_UP = 0,
@@ -76,44 +78,8 @@ void app_main()
   }
   ESP_ERROR_CHECK( ret );
 
-  i2s_config_t i2s_config{
-    //mode
-    static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
-    //sample_rate
-    44100,
-    //bits_per_sample
-    I2S_BITS_PER_SAMPLE_16BIT,
-    //channel_format
-    I2S_CHANNEL_FMT_RIGHT_LEFT,
-    //communication_format
-    static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-    //intr_alloc_flags
-    ESP_INTR_FLAG_LEVEL1,
-    //dma_buf_count (previously 6)
-    4,
-    //dma_buf_len (previously 60)
-    //4096 is maximum observed single a2dp data packet length
-    1024,
-    //use_apll
-    0,
-    //fixed_mclk
-    0
-  };
 
-  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
-  
-  i2s_pin_config_t pin_config = {
-      //bck_io_num
-      CONFIG_I2S_BCK_PIN,
-      //ws_io_num
-      CONFIG_I2S_LRCK_PIN,
-      //data_out_num
-      CONFIG_I2S_DATA_OUT_PIN,
-      //data_in_num
-      CONFIG_I2S_DATA_IN_PIN,                                                       //Not used
-  };
 
-  i2s_set_pin(I2S_NUM_0, &pin_config);
 
 /*
   ESP_ERROR_CHECK(esp_bt_controller_mem_release(ESP_BT_MODE_BLE));
@@ -211,6 +177,7 @@ void task_setup(void* arg) {
     (100.f, 0.7071f, -2.5f));
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Biquad::HighShelf>
     (100.f, 0.7071f, -2.5f));
+  //signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-30.f));
 
 /*
   //2nd Order LP filter
@@ -248,12 +215,55 @@ void task_setup(void* arg) {
   set_stereo_mode(DSP::StereoMode::Stereo);
   set_i2s_output(&i2sOutput);
 
-  signalChainLeft->setSampleRate(44100);
-  signalChainRight->setSampleRate(44100);
+  signalChainLeft->setSampleRate(SAMPLE_RATE);
+  signalChainRight->setSampleRate(SAMPLE_RATE);
 
   ESP_LOGI("INFO", "Intializing WM8731");
   wm8731.start();
   ESP_LOGI("INFO", "Done Intializing WM8731");
+
+  i2s_config_t i2s_config{
+    //mode
+    static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
+    //sample_rate
+    SAMPLE_RATE,
+    //bits_per_sample
+    I2S_BITS_PER_SAMPLE_16BIT,
+    //channel_format
+    I2S_CHANNEL_FMT_RIGHT_LEFT,
+    //communication_format
+    static_cast<i2s_comm_format_t>(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+    //intr_alloc_flags
+    ESP_INTR_FLAG_LEVEL1,
+    //dma_buf_count (previously 6)
+    4,
+    //dma_buf_len (previously 60)
+    //4096 is maximum observed single a2dp data packet length
+    1024,
+    //use_apll
+    1,//0,
+    //fixed_mclk
+    256 * SAMPLE_RATE//0
+  };
+
+  i2s_driver_install(I2S_NUM_0, &i2s_config, 0, NULL);
+  
+  i2s_pin_config_t pin_config = {
+      //bck_io_num
+      CONFIG_I2S_BCK_PIN,
+      //ws_io_num
+      CONFIG_I2S_LRCK_PIN,
+      //data_out_num
+      CONFIG_I2S_DATA_OUT_PIN,
+      //data_in_num
+      CONFIG_I2S_DATA_IN_PIN,                                                       //Not used
+  };
+
+  i2s_set_pin(I2S_NUM_0, &pin_config);
+
+  //Configure MCLK output on CLK_OUT2 (GPIO3)
+  REG_WRITE(PIN_CTRL, 0xF00);
+  PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0RXD_CLK_OUT2);
 
   ESP_LOGI("task_setup", "Starting I2S Input");
   i2sInput->start();
@@ -305,9 +315,9 @@ static void task_info(void* arg) {
       //heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
     ESP_LOGI("", "Left SignalChain (%uus, %uus), Right SignalChain "
-      "(%uus, %uus), %ub", signalChainLeft->avgProcTime(), signalChainLeft->maxProcTime(),
+      "(%uus, %uus), %ub. Peak sample: %d", signalChainLeft->avgProcTime(), signalChainLeft->maxProcTime(),
       signalChainRight->avgProcTime(), signalChainRight->maxProcTime(),
-      signalChainLeft->avgBufferSize());
+      signalChainLeft->avgBufferSize(), (int)signalChainLeft->peakSample());
 
     vTaskDelay(500 / portTICK_RATE_MS);
   }
