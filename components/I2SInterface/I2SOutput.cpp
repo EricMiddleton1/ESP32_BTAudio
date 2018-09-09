@@ -7,7 +7,7 @@ extern "C" {
     #include "esp_log.h"
 }
 
-namespace AudioInterface {
+namespace I2SInterface {
     I2SOutput::I2SOutput(i2s_port_t port, int bufferSize)
         :   m_port{port}
         ,   m_i2sBuffer(2*sizeof(int16_t)*bufferSize) {

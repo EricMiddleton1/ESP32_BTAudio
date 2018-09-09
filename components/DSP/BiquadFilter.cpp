@@ -30,7 +30,7 @@ void BiquadFilter::setCoefficients(float b0, float b1, float b2,
 }
 
 int32_t BiquadFilter::convertCoefficient(float coef) {
-  return saturate<int32_t>(coef * (1 << FRAC_BITS_COEF));
+  return Audio::saturate<int32_t>(coef * (1 << FRAC_BITS_COEF));
 }
 
 void BiquadFilter::processSamples(Audio::SampleBuffer& samples) {
@@ -42,10 +42,10 @@ void BiquadFilter::processSamples(Audio::SampleBuffer& samples) {
       + static_cast<int64_t>(m_b1)*m_x1 + static_cast<int64_t>(m_b2)*m_x2
       - static_cast<int64_t>(m_a1)*m_y1 - static_cast<int64_t>(m_a2)*m_y2;
 
-    samples[i] = saturate<int16_t>(intermediate >> (FRAC_BITS_COEF + FRAC_BITS_SAMPLE));
+    samples[i] = Audio::saturate<int16_t>(intermediate >> (FRAC_BITS_COEF + FRAC_BITS_SAMPLE));
 
     m_y2 = m_y1;
-    m_y1 = saturate<int32_t>(intermediate >> FRAC_BITS_COEF);
+    m_y1 = Audio::saturate<int32_t>(intermediate >> FRAC_BITS_COEF);
     m_x2 = m_x1;
     m_x1 = x_scaled;
   }
@@ -58,7 +58,7 @@ Biquad::LPF::LPF(float fc, float Q)
 }
 
 void Biquad::LPF::setSampleRate(int sampleRate) {
-  float w0 = 2.f*PI*m_fc/sampleRate;
+  float w0 = 2.f*Audio::PI*m_fc/sampleRate;
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
 
@@ -80,7 +80,7 @@ Biquad::HPF::HPF(float fc, float Q)
 }
 
 void Biquad::HPF::setSampleRate(int sampleRate) {
-  float w0 = 2.f*PI*m_fc/sampleRate;
+  float w0 = 2.f*Audio::PI*m_fc/sampleRate;
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
 
@@ -103,7 +103,7 @@ Biquad::PeakingEQ::PeakingEQ(float f0, float Q, float A)
 }
 
 void Biquad::PeakingEQ::setSampleRate(int sampleRate) {
-  float w0 = 2.f*PI*m_f0/sampleRate;
+  float w0 = 2.f*Audio::PI*m_f0/sampleRate;
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
 
@@ -127,7 +127,7 @@ Biquad::LowShelf::LowShelf(float f0, float Q, float A)
 }
 
 void Biquad::LowShelf::setSampleRate(int sampleRate) {
-  float w0 = 2.f*PI*m_f0/sampleRate;
+  float w0 = 2.f*Audio::PI*m_f0/sampleRate;
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
   float factor = 2.f*std::sqrt(m_A)*alpha;
@@ -152,7 +152,7 @@ Biquad::HighShelf::HighShelf(float f0, float Q, float A)
 }
 
 void Biquad::HighShelf::setSampleRate(int sampleRate) {
-  float w0 = 2.f*PI*m_f0/sampleRate;
+  float w0 = 2.f*Audio::PI*m_f0/sampleRate;
   float sw = std::sin(w0), cw = std::cos(w0);
   float alpha = sw / (2.f*m_Q);
   float factor = 2.f*std::sqrt(m_A)*alpha;

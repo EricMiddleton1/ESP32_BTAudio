@@ -3,7 +3,7 @@
 #include <limits>
 #include <algorithm>
 
-namespace DSP {
+namespace Audio {
   const float PI = 3.141592654f;
 
   template<typename OutType, typename InType>

@@ -61,8 +61,8 @@ extern "C" void app_main();
 
 std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
 
-AudioInterface::I2SOutput i2sOutput(I2S_NUM_0, 1024);
-std::unique_ptr<AudioInterface::I2SInput> i2sInput;
+I2SInterface::I2SOutput i2sOutput(I2S_NUM_0, 1024);
+std::unique_ptr<I2SInterface::I2SInput> i2sInput;
 
 Audio::SampleBuffer leftSamples(1024), rightSamples(1024);
 
@@ -115,7 +115,7 @@ void task_setup(void* arg) {
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
 
-  i2sInput = std::make_unique<AudioInterface::I2SInput>(I2S_NUM_0,
+  i2sInput = std::make_unique<I2SInterface::I2SInput>(I2S_NUM_0,
     1024,
     [](const Audio::SampleBuffer& left, const Audio::SampleBuffer& right) {
       

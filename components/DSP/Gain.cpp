@@ -13,7 +13,7 @@ uint32_t DSP::Filter::Gain::convertGain(float gain) {
   gain = std::pow(10.f, gain/20.f);
 
   //Store as 16:16 fixed point
-  return saturate<uint32_t>(gain * (1 << 16));
+  return Audio::saturate<uint32_t>(gain * (1 << 16));
 }
 
 void DSP::Filter::Gain::setSampleRate(int sampleRate) {
@@ -23,6 +23,6 @@ void DSP::Filter::Gain::processSamples(Audio::SampleBuffer& samples) {
   for(int i = 0; i < samples.size(); ++i) {
     auto scaled = static_cast<int64_t>(samples[i]) * m_gain;
 
-    samples[i] = saturate<int16_t>(scaled >> 16);
+    samples[i] = Audio::saturate<int16_t>(scaled >> 16);
   }
 }

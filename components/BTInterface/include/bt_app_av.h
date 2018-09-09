@@ -27,7 +27,7 @@ void set_signalChain(DSP::SignalChain* left, DSP::SignalChain* right);
 
 void set_stereo_mode(Audio::StereoMode stereoMode);
 
-void set_i2s_output(AudioInterface::I2SOutput* i2sOutput);
+void set_i2s_output(I2SInterface::I2SOutput* i2sOutput);
 
 /**
  * @brief     callback function for A2DP sink

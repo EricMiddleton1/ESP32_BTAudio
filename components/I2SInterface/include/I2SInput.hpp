@@ -8,7 +8,7 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace AudioInterface {
+namespace I2SInterface {
     class I2SInput {
     public:
         I2SInput(i2s_port_t port, int bufferSize,

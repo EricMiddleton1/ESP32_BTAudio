@@ -8,7 +8,7 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace AudioInterface {
+namespace I2SInterface {
     class I2SOutput {
     public:
         //Buffer size in samples
