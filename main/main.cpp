@@ -66,7 +66,7 @@ std::unique_ptr<I2SInterface::I2SInput> i2sInput;
 
 Audio::SampleBuffer leftSamples(1024), rightSamples(1024);
 
-WM8731 wm8731;
+AudioDevice::WM8731 wm8731;
 
 void app_main()
 {
@@ -218,9 +218,9 @@ void task_setup(void* arg) {
   signalChainLeft->setSampleRate(SAMPLE_RATE);
   signalChainRight->setSampleRate(SAMPLE_RATE);
 
-  ESP_LOGI("INFO", "Intializing WM8731");
+  ESP_LOGI("INFO", "Intializing AudioDevice::WM8731");
   wm8731.start();
-  ESP_LOGI("INFO", "Done Intializing WM8731");
+  ESP_LOGI("INFO", "Done Intializing AudioDevice::WM8731");
 
   i2s_config_t i2s_config{
     //mode
