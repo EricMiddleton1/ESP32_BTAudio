@@ -33,7 +33,7 @@ int32_t BiquadFilter::convertCoefficient(float coef) {
   return saturate<int32_t>(coef * (1 << FRAC_BITS_COEF));
 }
 
-void BiquadFilter::processSamples(SampleBuffer& samples) {
+void BiquadFilter::processSamples(Audio::SampleBuffer& samples) {
   for(int i = 0; i < samples.size(); ++i) {
     int32_t x_scaled = static_cast<int32_t>(samples[i]) << FRAC_BITS_SAMPLE;
 

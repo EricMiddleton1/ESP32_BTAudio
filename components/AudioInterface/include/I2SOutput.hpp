@@ -8,7 +8,7 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace DSP {
+namespace AudioInterface {
     class I2SOutput {
     public:
         //Buffer size in samples
@@ -16,12 +16,13 @@ namespace DSP {
         virtual ~I2SOutput();
 
         //This method may block until all samples can be copied into the queue
-        void writeSamples(const SampleBuffer& leftSamples,
-            const SampleBuffer& rightSamples);
+        void writeSamples(const Audio::SampleBuffer& leftSamples,
+            const Audio::SampleBuffer& rightSamples);
     
     private:
         static int packSamples(std::vector<uint8_t>& buffer,
-            const SampleBuffer& left, const SampleBuffer& right, int offset);
+            const Audio::SampleBuffer& left, const Audio::SampleBuffer& right,
+            int offset);
         
         i2s_port_t m_port;
         std::vector<uint8_t> m_i2sBuffer;

@@ -61,10 +61,10 @@ extern "C" void app_main();
 
 std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
 
-DSP::I2SOutput i2sOutput(I2S_NUM_0, 1024);
-std::unique_ptr<DSP::I2SInput> i2sInput;
+AudioInterface::I2SOutput i2sOutput(I2S_NUM_0, 1024);
+std::unique_ptr<AudioInterface::I2SInput> i2sInput;
 
-DSP::SampleBuffer leftSamples(1024), rightSamples(1024);
+Audio::SampleBuffer leftSamples(1024), rightSamples(1024);
 
 WM8731 wm8731;
 
@@ -115,9 +115,9 @@ void task_setup(void* arg) {
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
 
-  i2sInput = std::make_unique<DSP::I2SInput>(I2S_NUM_0,
+  i2sInput = std::make_unique<AudioInterface::I2SInput>(I2S_NUM_0,
     1024,
-    [](const DSP::SampleBuffer& left, const DSP::SampleBuffer& right) {
+    [](const Audio::SampleBuffer& left, const Audio::SampleBuffer& right) {
       
       std::memcpy(leftSamples.data(), left.data(), left.size()*sizeof(left[0]));
       std::memcpy(rightSamples.data(), right.data(), right.size()*sizeof(right[0]));
@@ -212,7 +212,7 @@ void task_setup(void* arg) {
   signalChainRight->addFilter(std::make_unique<DSP::Filter::Gain>(-4.4382f));
 */
   set_signalChain(signalChainLeft.get(), signalChainRight.get());
-  set_stereo_mode(DSP::StereoMode::Stereo);
+  set_stereo_mode(Audio::StereoMode::Stereo);
   set_i2s_output(&i2sOutput);
 
   signalChainLeft->setSampleRate(SAMPLE_RATE);

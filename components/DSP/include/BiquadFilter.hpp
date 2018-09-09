@@ -10,7 +10,7 @@ namespace Filter {
 
     void setCoefficients(float b0, float b1, float b2, float a0, float a1, float a2);
 
-    void processSamples(SampleBuffer& samples) override;
+    void processSamples(Audio::SampleBuffer& samples) override;
 
   private:
     static const int FRAC_BITS_COEF = 25; //signed 6.25 fixed point

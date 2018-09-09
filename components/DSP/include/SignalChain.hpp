@@ -16,7 +16,7 @@ namespace DSP {
 
     void setSampleRate(int sampleRate);
 
-    void processSamples(SampleBuffer& samples);
+    void processSamples(Audio::SampleBuffer& samples);
 
     uint32_t avgProcTime() const;
     uint32_t maxProcTime() const;

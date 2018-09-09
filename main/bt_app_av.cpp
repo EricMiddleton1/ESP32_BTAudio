@@ -34,11 +34,11 @@ extern "C" {
 static constexpr int BUFFER_SIZE = 1024;
 
 static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
-static DSP::StereoMode m_stereoMode{DSP::StereoMode::Stereo};
+static Audio::StereoMode m_stereoMode{Audio::StereoMode::Stereo};
 
-static DSP::I2SOutput *m_i2sOutput;
+static AudioInterface::I2SOutput *m_i2sOutput;
 
-static DSP::SampleBuffer m_leftSamples(BUFFER_SIZE),
+static Audio::SampleBuffer m_leftSamples(BUFFER_SIZE),
     m_rightSamples(BUFFER_SIZE);
 static std::vector<uint8_t> m_audioBuffer(BUFFER_SIZE*4);
 
@@ -59,11 +59,11 @@ void set_signalChain(DSP::SignalChain* signalChainLeft,
   m_signalChainRight = signalChainRight;
 }
 
-void set_stereo_mode(DSP::StereoMode stereoMode) {
+void set_stereo_mode(Audio::StereoMode stereoMode) {
   m_stereoMode = stereoMode;
 }
 
-void set_i2s_output(DSP::I2SOutput* i2sOutput) {
+void set_i2s_output(AudioInterface::I2SOutput* i2sOutput) {
     m_i2sOutput = i2sOutput;
 }
 

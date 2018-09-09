@@ -31,7 +31,7 @@ void SignalChain::setSampleRate(int sampleRate) {
   }
 }
 
-void SignalChain::processSamples(SampleBuffer& samples) {
+void SignalChain::processSamples(Audio::SampleBuffer& samples) {
   auto startTime = esp_timer_get_time();
 
   for(const auto sample : samples) {

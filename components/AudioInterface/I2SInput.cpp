@@ -6,9 +6,9 @@ extern "C" {
     #include "esp_log.h"
 }
 
-namespace DSP {
+namespace AudioInterface {
     I2SInput::I2SInput(i2s_port_t port, int bufferSize,
-        AudioCallback&& cb)
+        Audio::AudioCallback&& cb)
     :   m_port{port}
     ,   m_i2sBuffer(2*sizeof(int16_t)*bufferSize)
     ,   m_leftSamples(bufferSize)
@@ -67,7 +67,7 @@ namespace DSP {
     }
 
     void I2SInput::extractSamples(const std::vector<uint8_t>& buffer,
-        SampleBuffer& left, SampleBuffer& right) {
+        Audio::SampleBuffer& left, Audio::SampleBuffer& right) {
         
         for(int i = 0; i < left.size(); ++i) {
             int offset = 4*i;

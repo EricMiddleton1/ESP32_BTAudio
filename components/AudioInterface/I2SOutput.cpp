@@ -7,7 +7,7 @@ extern "C" {
     #include "esp_log.h"
 }
 
-namespace DSP {
+namespace AudioInterface {
     I2SOutput::I2SOutput(i2s_port_t port, int bufferSize)
         :   m_port{port}
         ,   m_i2sBuffer(2*sizeof(int16_t)*bufferSize) {
@@ -17,8 +17,8 @@ namespace DSP {
 
     }
 
-    void I2SOutput::writeSamples(const SampleBuffer& leftSamples,
-        const SampleBuffer& rightSamples) {
+    void I2SOutput::writeSamples(const Audio::SampleBuffer& leftSamples,
+        const Audio::SampleBuffer& rightSamples) {
         
         for(int offset = 0; offset < leftSamples.size(); ) {
             auto sampleCount = packSamples(m_i2sBuffer,
@@ -43,7 +43,7 @@ namespace DSP {
     }
 
     int I2SOutput::packSamples(std::vector<uint8_t>& buffer,
-        const SampleBuffer& left, const SampleBuffer& right, int offset) {
+        const Audio::SampleBuffer& left, const Audio::SampleBuffer& right, int offset) {
         
         int maxSamples = std::min(buffer.size()/(sizeof(int16_t)*2),
             left.size());

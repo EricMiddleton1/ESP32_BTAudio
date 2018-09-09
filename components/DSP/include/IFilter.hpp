@@ -7,6 +7,6 @@ namespace DSP {
   public:
     virtual void setSampleRate(int sampleRate)=0;
 
-    virtual void processSamples(SampleBuffer& samples)=0;
+    virtual void processSamples(Audio::SampleBuffer& samples)=0;
   };
 }

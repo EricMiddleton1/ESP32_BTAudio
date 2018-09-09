@@ -8,11 +8,11 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace DSP {
+namespace AudioInterface {
     class I2SInput {
     public:
         I2SInput(i2s_port_t port, int bufferSize,
-            AudioCallback&& cb);
+            Audio::AudioCallback&& cb);
         virtual ~I2SInput();
 
         void start();
@@ -23,12 +23,12 @@ namespace DSP {
     private:
         void inputTask();
         static void extractSamples(const std::vector<uint8_t>& buffer,
-            SampleBuffer& left, SampleBuffer& right);
+            Audio::SampleBuffer& left, Audio::SampleBuffer& right);
 
         i2s_port_t m_port;
         std::vector<uint8_t> m_i2sBuffer;
-        SampleBuffer m_leftSamples, m_rightSamples;
-        AudioCallback m_cb;
+        Audio::SampleBuffer m_leftSamples, m_rightSamples;
+        Audio::AudioCallback m_cb;
 
         TaskHandle_t m_taskHandle;
 
