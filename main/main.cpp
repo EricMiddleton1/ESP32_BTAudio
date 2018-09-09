@@ -311,10 +311,10 @@ static void bt_av_hdl_stack_evt(uint16_t event, void *p_param)
 
 static void task_info(void* arg) {
   for(;;) {
-    //ESP_LOGI("INFO", "Free Heap: %u bytes",
-      //heap_caps_get_free_size(MALLOC_CAP_8BIT));
+    ESP_LOGI("MEM", "Free Heap: %u bytes",
+      heap_caps_get_free_size(MALLOC_CAP_8BIT));
 
-    ESP_LOGI("", "Left SignalChain (%uus, %uus), Right SignalChain "
+    ESP_LOGI("AUDIO", "Left SignalChain (%uus, %uus), Right SignalChain "
       "(%uus, %uus), %ub. Peak sample: %d", signalChainLeft->avgProcTime(), signalChainLeft->maxProcTime(),
       signalChainRight->avgProcTime(), signalChainRight->maxProcTime(),
       signalChainLeft->avgBufferSize(), (int)signalChainLeft->peakSample());

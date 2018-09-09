@@ -37,13 +37,13 @@ namespace AudioDevice {
       int err = ESP_OK;
 
       /* Left Line In - 0x00
-       * Volume: 0dB (10111) //-9dB (10001)
+       * Volume: -7.5dB (10010)
        * Mute: off (0)
        * Copy left data to right: true (1)
        *
-       * Value = 0b10xx10111 = 0x117 //0b10xx10001 = 0x111
+       * Value = 0b10xx10010 = 0x112
        */
-      err = writeByte(DEVICE_ADDR, 0x00, 0x117);
+      err = writeByte(DEVICE_ADDR, 0x00, 0x112);
       ESP_LOGI("INFO", "Setting Left Line In register (%d)", err);
 
       /* Left Headphone out - 0x02 (0b0000010)
