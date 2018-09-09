@@ -3,7 +3,7 @@
 # project subdirectory.
 #
 
-PROJECT_NAME := a2dp_sink
+PROJECT_NAME := ESP32_Audio
 CXXFLAGS += -std=c++14 -O2
 
 include $(IDF_PATH)/make/project.mk
