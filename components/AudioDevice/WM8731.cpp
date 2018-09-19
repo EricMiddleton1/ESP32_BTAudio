@@ -7,13 +7,14 @@ extern "C" {
 
 namespace AudioDevice {
 
-  WM8731::WM8731() {
+  WM8731::WM8731(I2SInterface::I2SPort& i2sPort, int i2sSinkPin, int i2sSourcePin)
+    : m_i2sSink{i2sPort, i2sSinkPin}
+    , m_i2sSource{i2sPort, i2sSourcePin} {
 
   }
 
   void WM8731::start() {
       i2cInit();
-
       configureDevice();
   }
 

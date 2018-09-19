@@ -39,8 +39,8 @@ extern "C" {
 #include "Gain.hpp"
 #include "BiquadFilter.hpp"
 #include "types.hpp"
-#include "I2SOutput.hpp"
-#include "I2SInput.hpp"
+#include "I2SSource.hpp"
+#include "I2SSink.hpp"
 #include "WM8731.hpp"
 
 #define SAMPLE_RATE	44100
@@ -61,8 +61,11 @@ extern "C" void app_main();
 
 std::unique_ptr<DSP::SignalChain> signalChainLeft, signalChainRight;
 
-I2SInterface::I2SOutput i2sOutput(I2S_NUM_0, 1024);
-std::unique_ptr<I2SInterface::I2SInput> i2sInput;
+I2SInterface::I2SPort i2sPort{I2S_NUM_0, true, 44100,
+  CONFIG_I2S_BCK_PIN, CONFIG_I2S_LRCK_PIN};
+
+std::unique_ptr<I2SInterface::I2SSource> i2sSource;
+std::unique_ptr<I2SInterface::I2SSink> i2sSink;
 
 Audio::SampleBuffer leftSamples(1024), rightSamples(1024);
 
@@ -115,7 +118,10 @@ void task_setup(void* arg) {
   signalChainLeft = std::make_unique<DSP::SignalChain>();
   signalChainRight = std::make_unique<DSP::SignalChain>();
 
-  i2sInput = std::make_unique<I2SInterface::I2SInput>(I2S_NUM_0,
+  i2sSource = std::make_unique<I2SInterface::I2SSource>(i2sPort,
+    CONFIG_I2S_DATA_OUT_PIN, 1024);
+
+  i2sSink = std::make_unique<I2SInterface::I2SSink>(i2sPort, CONFIG_I2S_DATA_IN_PIN,
     1024,
     [](const Audio::SampleBuffer& left, const Audio::SampleBuffer& right) {
       
@@ -125,10 +131,7 @@ void task_setup(void* arg) {
       signalChainLeft->processSamples(leftSamples);
       signalChainRight->processSamples(rightSamples);
 
-      i2sOutput.writeSamples(leftSamples, rightSamples);
-      
-
-      //i2sOutput.writeSamples(left, right);
+      i2sSource->writeSamples(leftSamples, rightSamples);
     });
 
   //float fc = 1000.f;
@@ -213,7 +216,7 @@ void task_setup(void* arg) {
 */
   set_signalChain(signalChainLeft.get(), signalChainRight.get());
   set_stereo_mode(Audio::StereoMode::Stereo);
-  set_i2s_output(&i2sOutput);
+  set_i2s_source(i2sSource.get());
 
   signalChainLeft->setSampleRate(SAMPLE_RATE);
   signalChainRight->setSampleRate(SAMPLE_RATE);
@@ -222,6 +225,7 @@ void task_setup(void* arg) {
   wm8731.start();
   ESP_LOGI("INFO", "Done Intializing AudioDevice::WM8731");
 
+/*
   i2s_config_t i2s_config{
     //mode
     static_cast<i2s_mode_t>(I2S_MODE_MASTER | I2S_MODE_TX | I2S_MODE_RX),
@@ -264,9 +268,17 @@ void task_setup(void* arg) {
   //Configure MCLK output on CLK_OUT2 (GPIO3)
   REG_WRITE(PIN_CTRL, 0xF00);
   PIN_FUNC_SELECT(PERIPHS_IO_MUX_U0RXD_U, FUNC_U0RXD_CLK_OUT2);
+  */
+
+  if(i2sPort.start()) {
+    ESP_LOGI("task_setup", "I2S Port started");
+  }
+  else {
+    ESP_LOGE("task_setup", "I2S Port failed to start");
+  }
 
   ESP_LOGI("task_setup", "Starting I2S Input");
-  i2sInput->start();
+  i2sSink->start();
   ESP_LOGI("task_setup", "Done Starting I2S Input");
 
   /* create application task */

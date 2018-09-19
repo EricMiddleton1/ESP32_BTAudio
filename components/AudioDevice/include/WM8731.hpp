@@ -3,9 +3,9 @@
 #include <cstdint>
 
 namespace AudioDevice {
-  class WM8731 {
+  class WM8731 : public I2SInterface::I2SSink, I2SInterface::I2SSource {
   public:
-      WM8731();
+      WM8731(I2SInterface::I2SPort& i2sPort, int i2sSinkPin, int i2sSourcePin);
 
       void start();
 

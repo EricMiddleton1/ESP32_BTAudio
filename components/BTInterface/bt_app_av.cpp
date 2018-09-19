@@ -28,7 +28,7 @@ extern "C" {
 #include "bt_app_av.h"
 
 #include "SignalChain.hpp"
-#include "I2SOutput.hpp"
+#include "I2SSource.hpp"
 
 
 static constexpr int BUFFER_SIZE = 1024;
@@ -36,7 +36,7 @@ static constexpr int BUFFER_SIZE = 1024;
 static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
 static Audio::StereoMode m_stereoMode{Audio::StereoMode::Stereo};
 
-static I2SInterface::I2SOutput *m_i2sOutput;
+static I2SInterface::I2SSource *m_i2sSource;
 
 static Audio::SampleBuffer m_leftSamples(BUFFER_SIZE),
     m_rightSamples(BUFFER_SIZE);
@@ -63,8 +63,8 @@ void set_stereo_mode(Audio::StereoMode stereoMode) {
   m_stereoMode = stereoMode;
 }
 
-void set_i2s_output(I2SInterface::I2SOutput* i2sOutput) {
-    m_i2sOutput = i2sOutput;
+void set_i2s_source(I2SInterface::I2SSource* i2sSource) {
+    m_i2sSource = i2sSource;
 }
 
 /* callback for A2DP sink */
@@ -99,7 +99,7 @@ void bt_app_a2d_data_cb(const uint8_t *data, uint32_t len)
     m_signalChainLeft->processSamples(m_leftSamples);
     m_signalChainRight->processSamples(m_rightSamples);
 
-    m_i2sOutput->writeSamples(m_leftSamples, m_rightSamples);
+    m_i2sSource->writeSamples(m_leftSamples, m_rightSamples);
 
     if (++m_pkt_cnt % 500 == 0) {
         ESP_LOGI(BT_AV_TAG, "Audio packet count %u, packet size %d bytes", m_pkt_cnt, len);

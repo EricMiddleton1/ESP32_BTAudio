@@ -1,4 +1,4 @@
-#include "I2SInput.hpp"
+#include "I2SSink.hpp"
 
 #include <cstring>
 
@@ -7,9 +7,9 @@ extern "C" {
 }
 
 namespace I2SInterface {
-    I2SInput::I2SInput(i2s_port_t port, int bufferSize,
+    I2SSink::I2SSink(I2SPort& i2sPort, int i2sDataPin, int bufferSize,
         Audio::AudioCallback&& cb)
-    :   m_port{port}
+    :   m_i2sHandle{i2sPort, i2sDataPin}
     ,   m_i2sBuffer(2*sizeof(int16_t)*bufferSize)
     ,   m_leftSamples(bufferSize)
     ,   m_rightSamples(bufferSize)
@@ -18,13 +18,13 @@ namespace I2SInterface {
 
     }
 
-    I2SInput::~I2SInput() {
-
+    I2SSink::~I2SSink() {
+      stop();
     }
 
-    void I2SInput::start() {
+    void I2SSink::start() {
         xTaskCreate([](void* instance) {
-                reinterpret_cast<I2SInput*>(instance)->inputTask();
+                reinterpret_cast<I2SSink*>(instance)->inputTask();
             },
             "I2S_Input",
             4096,
@@ -36,18 +36,18 @@ namespace I2SInterface {
         m_running = true;
     }
 
-    void I2SInput::stop() {
+    void I2SSink::stop() {
         if(m_running) {
             vTaskDelete(m_taskHandle);
             m_running = false;
         }
     }
 
-    void I2SInput::inputTask() {
+    void I2SSink::inputTask() {
         for(;;) {
             size_t bytesRead = 0;
 
-            auto err = i2s_read(m_port,
+            auto err = i2s_read(m_i2sHandle.port().number(),
                 m_i2sBuffer.data(),
                 m_i2sBuffer.size(),
                 &bytesRead,
@@ -61,12 +61,12 @@ namespace I2SInterface {
                 }
             }
             else {
-                ESP_LOGE("I2SInput", "i2s_read failed (%d)", err);
+                ESP_LOGE("I2SSink", "i2s_read failed (%d)", err);
             }
         }
     }
 
-    void I2SInput::extractSamples(const std::vector<uint8_t>& buffer,
+    void I2SSink::extractSamples(const std::vector<uint8_t>& buffer,
         Audio::SampleBuffer& left, Audio::SampleBuffer& right) {
         
         for(int i = 0; i < left.size(); ++i) {
