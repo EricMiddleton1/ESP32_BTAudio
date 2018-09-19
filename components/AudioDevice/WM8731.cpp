@@ -7,15 +7,33 @@ extern "C" {
 
 namespace AudioDevice {
 
-  WM8731::WM8731(I2SInterface::I2SPort& i2sPort, int i2sSinkPin, int i2sSourcePin)
-    : m_i2sSink{i2sPort, i2sSinkPin}
-    , m_i2sSource{i2sPort, i2sSourcePin} {
+  WM8731::WM8731(I2S::Port& i2sPort, int i2sSinkPin, int i2sSourcePin,
+    Audio::AudioCallback&& sinkCB)
+    : m_i2sSink{i2sPort, i2sSinkPin, 1024, std::move(sinkCB)}
+    , m_i2sSource{i2sPort, i2sSourcePin, 1024} {
 
   }
 
   void WM8731::start() {
+      m_i2sSink.stop();
+      m_i2sSource.stop();
+
       i2cInit();
       configureDevice();
+
+      m_i2sSink.start();
+      m_i2sSource.start();
+  }
+
+  void WM8731::stop() {
+    m_i2sSink.stop();
+    m_i2sSource.stop();
+  }
+
+  void WM8731::writeSamples(const Audio::SampleBuffer& left,
+    const Audio::SampleBuffer& right) {
+
+    m_i2sSource.writeSamples(left, right);
   }
 
   void WM8731::i2cInit() {
@@ -38,13 +56,13 @@ namespace AudioDevice {
       int err = ESP_OK;
 
       /* Left Line In - 0x00
-       * Volume: -7.5dB (10010)
+       * Volume: 0dB (10111) //-7.5dB (10010)
        * Mute: off (0)
        * Copy left data to right: true (1)
        *
-       * Value = 0b10xx10010 = 0x112
+       * Value = 0b10xx10111 = 0x117 //0b10xx10010 = 0x112
        */
-      err = writeByte(DEVICE_ADDR, 0x00, 0x112);
+      err = writeByte(DEVICE_ADDR, 0x00, 0x117);
       ESP_LOGI("INFO", "Setting Left Line In register (%d)", err);
 
       /* Left Headphone out - 0x02 (0b0000010)

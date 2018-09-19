@@ -10,12 +10,17 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace I2SInterface {
-    class I2SSource {
+namespace I2S {
+    class Source {
     public:
         //Buffer size in samples
-        I2SSource(I2SPort& i2sPort, int i2sDataPin, int bufferSize);
-        virtual ~I2SSource();
+        Source(Port& port, int i2sDataPin, int bufferSize);
+        virtual ~Source();
+
+        void start();
+        void stop();
+
+        bool running() const;
 
         //This method may block until all samples can be copied into the queue
         void writeSamples(const Audio::SampleBuffer& leftSamples,
@@ -26,7 +31,7 @@ namespace I2SInterface {
             const Audio::SampleBuffer& left, const Audio::SampleBuffer& right,
             int offset);
         
-        I2SSourceHandle m_i2sHandle;
+        SourceHandle m_i2sHandle;
         std::vector<uint8_t> m_i2sBuffer;
     };
 }

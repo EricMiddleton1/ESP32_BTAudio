@@ -1,7 +1,11 @@
 #include "I2SPort.hpp"
 
-namespace I2SInterface {
-  I2SPort::I2SPort(i2s_port_t portNum, bool master, int sampleRate,
+extern "C" {
+  #include "esp_log.h"
+}
+
+namespace I2S {
+  Port::Port(i2s_port_t portNum, bool master, int sampleRate,
     int bckPin, int wsPin)
     : m_portNum{portNum}
     , m_master{master}
@@ -13,11 +17,16 @@ namespace I2SInterface {
     , m_running{false} {
   }
 
-  I2SPort::~I2SPort() {
+  Port::~Port() {
     stop();
   }
 
-  bool I2SPort::start() {
+  bool Port::start() {
+    if(m_running) {
+      //Already started
+      return true;
+    }
+
     //Compute I2S Mode (master, transmit, receive settings)
     int mode = m_master ? I2S_MODE_MASTER : I2S_MODE_SLAVE;
     if(m_sourcePin != -1) {
@@ -26,6 +35,9 @@ namespace I2SInterface {
     if(m_sinkPin != -1) {
       mode |= I2S_MODE_RX;
     }
+
+    ESP_LOGI("I2S::Port", "I2S Mode flags: %x", mode);
+    ESP_LOGI("I2S::Port", "Data Out Pin: %d, Data In Pin: %d", m_sourcePin, m_sinkPin);
 
     i2s_config_t i2sConfig {
       //Mode
@@ -64,12 +76,14 @@ namespace I2SInterface {
     //Install driver
     esp_err_t err = i2s_driver_install(m_portNum, &i2sConfig, 0, NULL);
     if(err != ESP_OK) {
+      ESP_LOGE("I2S::Port", "i2s_driver_install failed: %d", err);
       return false;
     }
 
     //Configure pins
     err = i2s_set_pin(m_portNum, &pinConfig);
     if(err != ESP_OK) {
+      ESP_LOGE("I2S::Port", "i2s_set_pin failed: %d", err);
       return false;
     }
 
@@ -80,7 +94,7 @@ namespace I2SInterface {
     return true;
   }
 
-  bool I2SPort::stop() {
+  bool Port::stop() {
     if(m_running) {
       i2s_driver_uninstall(m_portNum);
       m_running = false;
@@ -89,122 +103,130 @@ namespace I2SInterface {
     return !m_running;
   }
 
-  bool I2SPort::running() const {
+  bool Port::running() const {
     return m_running;
   }
 
-  i2s_port_t I2SPort::number() const {
+  i2s_port_t Port::number() const {
     return m_portNum;
   }
 
-  bool I2SPort::master() const {
+  bool Port::master() const {
     return m_master;
   }
 
-  int I2SPort::sampleRate() const {
+  int Port::sampleRate() const {
     return m_sampleRate;
   }
 
-  int I2SPort::bckPin() const {
+  int Port::bckPin() const {
     return m_bckPin;
   }
 
-  int I2SPort::wsPin() const {
+  int Port::wsPin() const {
     return m_wsPin;
   }
 
-  int I2SPort::sourcePin() const {
+  int Port::sourcePin() const {
     return m_sourcePin;
   }
 
-  int I2SPort::sinkPin() const {
+  int Port::sinkPin() const {
     return m_sinkPin;
   }
 
-  bool I2SPort::registerSource(int dataPin) {
-    if(m_sourcePin) {
+  bool Port::registerSource(int dataPin) {
+    if(m_sourcePin != -1) {
       //Source already registered
       return false;
     }
+
+    ESP_LOGI("I2S::Port", "Source registered on pin %d", dataPin);
 
     m_sourcePin = dataPin;
     return true;
   }
 
-  bool I2SPort::deregisterSource() {
+  bool Port::deregisterSource() {
     if(m_sourcePin == -1) {
       //No registered source
       return false;
     }
 
+    ESP_LOGI("I2S::Port", "Source deregistered");
+
     m_sourcePin = -1;
     return true;
   }
 
-  bool I2SPort::registerSink(int dataPin) {
-    if(m_sinkPin) {
+  bool Port::registerSink(int dataPin) {
+    if(m_sinkPin != -1) {
       //Sink already registered
       return false;
     }
+
+    ESP_LOGI("I2S::Port", "Sink registered on pin %d", dataPin);
 
     m_sinkPin = dataPin;
     return true;
   }
 
-  bool I2SPort::deregisterSink() {
+  bool Port::deregisterSink() {
     if(m_sinkPin == -1) {
       //No registered sink
       return false;
     }
+
+    ESP_LOGI("I2S::Port", "Sink deregistered");
 
     m_sinkPin = -1;
     return true;
   }
 
 
-  I2SSourceHandle::I2SSourceHandle(I2SPort& port, int dataPin)
+  SourceHandle::SourceHandle(Port& port, int dataPin)
     : m_port{port}
     , m_valid{m_port.registerSource(dataPin)} {
   }
 
-  I2SSourceHandle::~I2SSourceHandle() {
+  SourceHandle::~SourceHandle() {
     if(m_valid) {
       m_port.deregisterSource();
     }
   }
 
-  I2SSourceHandle::operator bool() const {
+  SourceHandle::operator bool() const {
     return m_valid;
   }
 
-  I2SPort& I2SSourceHandle::port() {
+  Port& SourceHandle::port() {
     return m_port;
   }
 
-  const I2SPort& I2SSourceHandle::port() const {
+  const Port& SourceHandle::port() const {
     return m_port;
   }
 
-  I2SSinkHandle::I2SSinkHandle(I2SPort& port, int dataPin)
+  SinkHandle::SinkHandle(Port& port, int dataPin)
     : m_port{port}
     , m_valid{m_port.registerSink(dataPin)} {
   }
 
-  I2SSinkHandle::~I2SSinkHandle() {
+  SinkHandle::~SinkHandle() {
     if(m_valid) {
       m_port.deregisterSink();
     }
   }
 
-  I2SSinkHandle::operator bool() const {
+  SinkHandle::operator bool() const {
     return m_valid;
   }
 
-  I2SPort& I2SSinkHandle::port() {
+  Port& SinkHandle::port() {
     return m_port;
   }
 
-  const I2SPort& I2SSinkHandle::port() const {
+  const Port& SinkHandle::port() const {
     return m_port;
   }
 

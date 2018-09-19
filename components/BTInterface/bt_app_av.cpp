@@ -36,7 +36,7 @@ static constexpr int BUFFER_SIZE = 1024;
 static DSP::SignalChain *m_signalChainLeft, *m_signalChainRight;
 static Audio::StereoMode m_stereoMode{Audio::StereoMode::Stereo};
 
-static I2SInterface::I2SSource *m_i2sSource;
+static I2S::Source *m_i2sSource;
 
 static Audio::SampleBuffer m_leftSamples(BUFFER_SIZE),
     m_rightSamples(BUFFER_SIZE);
@@ -63,7 +63,7 @@ void set_stereo_mode(Audio::StereoMode stereoMode) {
   m_stereoMode = stereoMode;
 }
 
-void set_i2s_source(I2SInterface::I2SSource* i2sSource) {
+void set_i2s_source(I2S::Source* i2sSource) {
     m_i2sSource = i2sSource;
 }
 

@@ -7,11 +7,11 @@ extern "C" {
   #include <driver/i2s.h>
 }
 
-namespace I2SInterface {
-  class I2SPort {
+namespace I2S {
+  class Port {
   public:
-    I2SPort(i2s_port_t portNum, bool master, int sampleRate, int bckPin, int wsPin);
-    ~I2SPort();
+    Port(i2s_port_t portNum, bool master, int sampleRate, int bckPin, int wsPin);
+    ~Port();
 
     bool start();
     bool stop();
@@ -26,8 +26,8 @@ namespace I2SInterface {
     int sinkPin() const;
 
   protected:
-    friend class I2SSourceHandle;
-    friend class I2SSinkHandle;
+    friend class SourceHandle;
+    friend class SinkHandle;
 
     bool registerSource(int dataPin);
     bool deregisterSource();
@@ -44,35 +44,35 @@ namespace I2SInterface {
     bool m_running;
   };
 
-  class I2SSourceHandle {
+  class SourceHandle {
   public:
-    I2SSourceHandle(I2SPort& port, int dataPin);
-    I2SSourceHandle(I2SSourceHandle&) = delete;
-    ~I2SSourceHandle();
+    SourceHandle(Port& port, int dataPin);
+    SourceHandle(SourceHandle&) = delete;
+    ~SourceHandle();
 
     operator bool() const;
 
-    I2SPort& port();
-    const I2SPort& port() const;
+    Port& port();
+    const Port& port() const;
 
   private:
-    I2SPort& m_port;
+    Port& m_port;
     bool m_valid;
   };
 
-  class I2SSinkHandle {
+  class SinkHandle {
   public:
-    I2SSinkHandle(I2SPort& port, int dataPin);
-    I2SSinkHandle(I2SSinkHandle&) = delete;
-    ~I2SSinkHandle();
+    SinkHandle(Port& port, int dataPin);
+    SinkHandle(SinkHandle&) = delete;
+    ~SinkHandle();
 
     operator bool() const;
 
-    I2SPort& port();
-    const I2SPort& port() const;
+    Port& port();
+    const Port& port() const;
 
   private:
-    I2SPort& m_port;
+    Port& m_port;
     bool m_valid;
   };
 }

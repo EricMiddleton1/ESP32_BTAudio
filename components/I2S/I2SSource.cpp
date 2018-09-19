@@ -7,17 +7,29 @@ extern "C" {
     #include "esp_log.h"
 }
 
-namespace I2SInterface {
-    I2SSource::I2SSource(I2SPort& i2sPort, int i2sDataPin, int bufferSize)
+namespace I2S {
+    Source::Source(Port& i2sPort, int i2sDataPin, int bufferSize)
         :   m_i2sHandle{i2sPort, i2sDataPin}
         ,   m_i2sBuffer(2*sizeof(int16_t)*bufferSize) {
     }
 
-    I2SSource::~I2SSource() {
+    Source::~Source() {
 
     }
 
-    void I2SSource::writeSamples(const Audio::SampleBuffer& leftSamples,
+    void Source::start() {
+      m_i2sHandle.port().start();
+    }
+
+    void Source::stop() {
+      m_i2sHandle.port().stop();
+    }
+
+    bool Source::running() const {
+      return m_i2sHandle.port().running();
+    }
+
+    void Source::writeSamples(const Audio::SampleBuffer& leftSamples,
         const Audio::SampleBuffer& rightSamples) {
         
         for(int offset = 0; offset < leftSamples.size(); ) {
@@ -42,7 +54,7 @@ namespace I2SInterface {
         }
     }
 
-    int I2SSource::packSamples(std::vector<uint8_t>& buffer,
+    int Source::packSamples(std::vector<uint8_t>& buffer,
         const Audio::SampleBuffer& left, const Audio::SampleBuffer& right, int offset) {
         
         int maxSamples = std::min(buffer.size()/(sizeof(int16_t)*2),

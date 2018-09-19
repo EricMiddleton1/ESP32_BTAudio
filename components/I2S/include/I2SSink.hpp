@@ -10,12 +10,12 @@ extern "C" {
 
 #include "types.hpp"
 
-namespace I2SInterface {
-    class I2SSink {
+namespace I2S {
+    class Sink {
     public:
-        I2SSink(I2SPort& i2sPort, int i2sDataPin, int bufferSize,
+        Sink(Port& port, int i2sDataPin, int bufferSize,
             Audio::AudioCallback&& cb);
-        virtual ~I2SSink();
+        virtual ~Sink();
 
         void start();
         void stop();
@@ -27,7 +27,7 @@ namespace I2SInterface {
         static void extractSamples(const std::vector<uint8_t>& buffer,
             Audio::SampleBuffer& left, Audio::SampleBuffer& right);
 
-        I2SSinkHandle m_i2sHandle;
+        SinkHandle m_i2sHandle;
         std::vector<uint8_t> m_i2sBuffer;
         Audio::SampleBuffer m_leftSamples, m_rightSamples;
         Audio::AudioCallback m_cb;
